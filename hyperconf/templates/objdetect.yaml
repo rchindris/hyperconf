@@ -1,0 +1,12 @@
+name: Object Detection.
+description: Experiment template that defines the required configuration for an
+  object detection experiment.
+model:
+  required: true
+  type: classname
+  components:
+    - name: backbone
+    - name: pan
+      required: false
+    - name: head
+      required: true
