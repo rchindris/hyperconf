@@ -1,0 +1,17 @@
+name: Keras type definitions.
+description: Provides configuration definitions for Keras types.
+Linear:
+  type: tensorflow.keras.layers.Dense
+  args:
+  - name: units
+    type: int
+  - name: activation
+    type: str
+  - name: use_bias
+    type: bool
+    default: False
+Activation:
+ type: tensorflow.keras.layers.Activation
+ args:
+ - name: name
+   type: str
