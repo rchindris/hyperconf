@@ -1,4 +1,4 @@
-name: Keras type definitions.
+name: keras
 description: Provides configuration definitions for Keras types.
 Linear:
   type: tensorflow.keras.layers.Dense

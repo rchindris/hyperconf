@@ -16,7 +16,7 @@ class ElementDefinition:
         """Initialize an ElementDefinition.
 
         Arguments:
-        name (str): the configuration item name.
+        name (str): the configuration tag name.
         required (bool): whether this element is a required configuration
         element or not. Default: False.
         argments (List[Dict]): a list of supported arguments. Default: empty.
@@ -62,7 +62,7 @@ class ElementDefinition:
 
 
 class ConfigurationDefinitions:
-    """Define the format of an experiment configuration."""
+    """Define the elements allowed in an experiment configuration file."""
 
     def __init__(self, template_file: str | Path | List[str] | List[Path]):
         """Initialize an experiment template from file.
@@ -113,28 +113,34 @@ class ConfigurationDefinitions:
 
     def __repr__(self):
         """Object representation."""
-        return "ConfigurationTemplate(templates: " +\
-            ", ".join([f"({n}, {d})" for n, d in
-                       zip(self._names, self._descriptions)]) +\
-                       ", tags: [" + ", ".join(self._tags) + "])"
+        return f"ConfigurationTemplate({self._names!r})"
 
     def __str__(self):
         """Object to string."""
-        return f"Configuration template: name={self._name} "\
-            f"description= {self._description}"
+        return f"ConfigurationTemplate: templates={self._names}"
 
-    def load(self, template_path: str|Path):
+    def load(self, template_path: str | Path):
+        """Load a template file.
+
+        Args:
+        template_path (str | Path): the path to the template definition file.
+        """
+        if template_path is None:
+            raise ValueError("template_path is None")
+
+        template_path = Path(template_path) if \
+            isinstance(template_path, str) else template_path
+
         if not template_path.exists():
             # Search for a package resource
             # with the same name (predefined template).
             pkg_files = resources.files("hyperconf")
-            template_path = pkg_files / "templates" /\
-                template_path.name
+            template_path = pkg_files / "templates" / template_path.name
 
             if not template_path.exists():
                 raise IOError(f"Failed to load template {template_path}: "
-                              "The file cannot be found and no builtin "
-                              "template with that name exists.")
+                              "Please check that the file exists and is a "
+                              "valid configuration template definition file.")
 
             with open(template_path) as tfile:
                 try:
@@ -145,7 +151,6 @@ class ConfigurationDefinitions:
             self._parse(template_def)
 
 
-
 if __name__ == "__main__":
     template = ConfigurationDefinitions(["generic.yaml", "keras.yaml"])
-    print(repr(template))
+    print(template)

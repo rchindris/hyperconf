@@ -1,4 +1,4 @@
-name: Generic configuration template.
+name: generic
 description: Provides basic configuration tags to be used in generic experiment configurations.
 
 # The 'use' directive allows importing configuration tags from templates.
