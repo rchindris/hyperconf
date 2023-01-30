@@ -1,0 +1,17 @@
+name: experiment
+description: Machine Learning experiment configuration.
+
+# The 'model' is a required configuration object.
+model:
+  required: true
+  type: classname
+  
+# Train parameters are required.
+train:
+  required: true
+  type: classname
+
+# Test parameters.
+test:
+  required: true
+  type: classname
