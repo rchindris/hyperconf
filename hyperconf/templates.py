@@ -1,11 +1,11 @@
 """Provide configuration tag definition support."""
 import yaml
 import logging
+
 from pathlib import Path
 from typing import Dict, List
 
 from enum import Enum
-from collections import namedtuple
 
 try:
     from importlib import resources
@@ -13,23 +13,18 @@ except ImportError:
     raise ImportError("Could not find module importlib.resources."
                       "Python versions <3.7 are not supported.")
 
-from hyperconf.errors import TemplateDefinitionError, UndefinedTagError
 from hyperconf.yaml import LineInfoLoader
+from hyperconf.types import (
+    htype,
+    hstr
+)
+from hyperconf.errors import (
+    TemplateDefinitionError,
+    UndefinedTagError
+)
+
 
 _logger = logging.getLogger(__name__)
-
-Argument = namedtuple("Argument", "name python_type")
-
-
-class ParameterTypes(Enum):
-    """Allowed types for parameter definitions."""
-
-    STR = Argument("str", str)
-    BOOL = Argument("bool", bool)
-    INT = Argument("int", int)
-    FLOAT = Argument("float", float)
-    CLASSNAME = Argument("classname", str)
-    TUPLE = Argument("tuple", tuple)
 
 
 class ParamDef:
@@ -61,16 +56,15 @@ class ParamDef:
 
         type_name = node.get("type", "str")
 
-        if type_name.upper() not in ParameterTypes.__members__:
+        if not htype.supports(type_name):
             raise TemplateDefinitionError(
                 element.name,
                 self._line,
                 element.file,
-                f"Unknown argument type '{type_name}. Supported types "
-                f"are {ParameterTypes.__members__.keys()}"
+                f"Unknown data type '{type_name}."
             )
 
-        self._type = ParameterTypes[type_name.upper()]
+        self._type = htype.from_name(type_name)
         self._required = node.get("required", False)
         self._default_value = node.get("default-value",
                                        self._type.value.python_type())
@@ -113,8 +107,8 @@ class NodeDef:
 
         self._file = template_path
         self._name = name
-        self._type_name = node.get("type", ParameterTypes.STR.name)
-        if self._type_name.upper() not in ParameterTypes.__members__:
+        self._type_name = node.get("type", hstr.name)
+        if not htype.supports(self._type_name):
             raise TemplateDefinitionError(self._name,
                                           node["__line__"], self._file,
                                           f"The type {self._type_name} is "

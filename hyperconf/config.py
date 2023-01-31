@@ -7,14 +7,19 @@ from typing import Dict
 from pathlib import Path
 
 from hyperconf.yaml import LineInfoLoader
-from hyperconf.errors import InvalidYamlError, UndefinedTagError
+from hyperconf.errors import (
+    InvalidYamlError,
+    UndefinedTagError
+)
 from hyperconf.templates import NodeDefs
 
 
 class HyperConfig(UserDict):
     """An object containing configuration. """
 
-    def __init__(self, raw_config: Dict, strict: bool = True):
+    def __init__(self, raw_config: Dict,
+                 config_path: str = None,
+                 strict: bool = True):
         """Initialize a HyperConfig object from a dictionary.
 
         Arguments:
@@ -40,8 +45,12 @@ class HyperConfig(UserDict):
 
         for decl_name, decl in raw_config.items():
             node_def = self._defs.get(decl_name, None)
-            if node_def is None:
-                raise UndefinedTagErrror(decl_name)
+            decl_line = decl["__line__"] if "__line__" in decl else None
+
+            if node_def is None and strict:
+                raise UndefinedTagErrror(decl_name,
+                                         decl_line,
+                                         config_path)
 
             try:
                 self.data[decl_name] = node_def.parse(decl)

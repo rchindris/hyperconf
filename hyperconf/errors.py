@@ -29,13 +29,14 @@ class TemplateDefinitionError(HyperconfError):
         msg (str): error details.
         """
         super().__init__(f"Failed to parse template definition for "
-                         f"tag '{tag}':  {message} (in {path}, line {line_no}")
+                         f"tag '{tag}':  {message} (in {path}, line "
+                         f"{line_no})")
 
 
 class UndefinedTagError(HyperconfError):
-    """Thrown when a tag is not defined."""
+    """Signals that a node name is undefined."""
 
-    def __init__(self, tag_name):
+    def __init__(self, tag_name, line_no, path):
         """Initialize an UndefinedTagError.
 
         Args:
@@ -43,8 +44,8 @@ class UndefinedTagError(HyperconfError):
         """
         super().__init__
         (
-            self,
-            f"Could not find a definition for tag {tag_name}"
+            f"Could not find a definition for tag {tag_name}  "
+            f"(in {path}, line {line_no})"
         )
 
 
@@ -55,11 +56,22 @@ class InvalidYamlError(HyperconfError):
         """Initialize an InvalidYamlError.
 
         Args:
-        tag_name (str): the name of the undefined tag.
+        tag_name (str): the undefined node name.
         """
         super().__init__
         (
-            self,
             f"Failed to load the configuration from {path}. "
             f"Reason: {error}"
         )
+
+
+class UnknownDataTypeError(HyperconfError):
+    """Signal an unsupported hyperconf data type."""
+
+    def __init__(self, type_name: str):
+        """Initialize an UnknownDataTypeError exception.
+
+        Arguments:
+        type_name (str): the unknown type name.
+        """
+        super().__init__(f"The data type {type_name} is not supported.")
