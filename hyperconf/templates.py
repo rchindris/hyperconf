@@ -5,8 +5,6 @@ import logging
 from pathlib import Path
 from typing import Dict, List
 
-from enum import Enum
-
 try:
     from importlib import resources
 except ImportError:
@@ -14,9 +12,10 @@ except ImportError:
                       "Python versions <3.7 are not supported.")
 
 from hyperconf.yaml import LineInfoLoader
-from hyperconf.types import (
+from hyperconf.lang import (
     htype,
-    hstr
+    hstr,
+    Keywords
 )
 from hyperconf.errors import (
     TemplateDefinitionError,
@@ -27,7 +26,7 @@ from hyperconf.errors import (
 _logger = logging.getLogger(__name__)
 
 
-class ParamDef:
+class ParameterDefinition:
     """A configuration element parameter definition."""
 
     def __init__(self, node: Dict, element):
@@ -52,22 +51,23 @@ class ParamDef:
                                           element.file,
                                           "Missing the 'name' property "
                                           "for argument.")
-        self._name = node["name"]
+        self._name = node[Keywords.Parameter.NAME.value]
+        type_name = node.get(Keywords.Parameter.TYPE, hstr.name)
 
-        type_name = node.get("type", "str")
-
-        if not htype.supports(type_name):
+        if not htype.is_supported(type_name):
             raise TemplateDefinitionError(
                 element.name,
                 self._line,
                 element.file,
-                f"Unknown data type '{type_name}."
+                f"Parameter type '{type_name} is not supported."
             )
 
         self._type = htype.from_name(type_name)
-        self._required = node.get("required", False)
-        self._default_value = node.get("default-value",
-                                       self._type.value.python_type())
+        self._required = node.get(Keywords.Parameter.REQUIRED, False)
+        self._default_value = node.get(
+            Keywords.Parameter.DEFAULT_VALUE,
+            self._type.default_value
+        )
 
     @property
     def name(self):
@@ -90,11 +90,11 @@ class ParamDef:
         return self._default_value
 
 
-class NodeDef:
-    """Configuration template element definition."""
+class NodeTemplate:
+    """Configuration object template definition."""
 
     def __init__(self, name: str, node: Dict, template_path: str = None):
-        """Initialize an ElementDefinition.
+        """Initialize a NodeTemplate.
 
         Arguments:
         name (str): the configuration tag name.
@@ -107,19 +107,23 @@ class NodeDef:
 
         self._file = template_path
         self._name = name
-        self._type_name = node.get("type", hstr.name)
-        if not htype.supports(self._type_name):
+        self._description = node.get(Keywords.Template.DESCRIPTION.value, "")
+
+        self._type_name = node.get(Keywords.Template.TYPE.value, hstr.name)
+        if not htype.is_supported(self._type_name):
             raise TemplateDefinitionError(self._name,
                                           node["__line__"], self._file,
                                           f"The type {self._type_name} is "
                                           "not supported")
-        self._required = node.get("required", False)
+        self._type = htype.from_name(self._type_name)
+
+        self._required = node.get(Keywords.Template.REQUIRED, False)
 
         self._line = node.get("__line__")
-        self._args = []
+        self._params = []
 
-        if "args" in node:
-            arg_defs = node["args"]
+        if Keywords.Template.ARGS in node:
+            arg_defs = node[Keywords.Template.ARGS]
             if not isinstance(arg_defs, list):
                 raise TemplateDefinitionError(
                     "args",
@@ -128,27 +132,31 @@ class NodeDef:
                     "specified as a list.")
 
         for arg_name, arg_def in node.items():
-            if arg_name == "args":
+            if arg_name == Keywords.Template.ARGS:
                 for arg in arg_def:
-                    self._args.append(ParamDef(arg, self))
+                    self._params.append(ParameterDefinition(arg, self))
 
     def __repr__(self):
         """Object representation."""
-        text = f"[tag: {self._name}, type:{self._type_name}, args: ("
-        for elem in self._args:
+        text = f"[tag: {self._name}, type:{self._type_name}, "\
+            f"description: '{self._description}', args: ("
+
+        for elem in self._params:
             text += str(elem)
         text += ")]"
         return text
 
     def __str__(self):
         """Convert to string."""
-        return f"ElementDefinition:{self._name}"
+        return f"ObjectTemplate: {self._name} - {self._description}"
 
     def parse(self, decl):
         """Validate and extract a node declaration."""
         if decl is None:
             raise ValueError("decl is None")
-        print(decl, self._type_name)
+
+        if not isinstance(decl, dict):
+            return self._type(decl)
         return decl
 
     @property
@@ -172,13 +180,8 @@ class NodeDef:
         return self._line
 
 
-class NodeDefs:
+class NodeTemplates:
     """Define the elements allowed in an experiment configuration file."""
-
-    class Predefined:
-        """Builtin tokens."""
-
-        USE = "use"
 
     def __init__(self, template_file: str | Path | List[str] | List[Path]
                  = "builtins.yaml"):
@@ -215,10 +218,10 @@ class NodeDefs:
 
         self._names = []
         self._descriptions = []
-        self._tags = {}
+        self._node_defs = {}
 
         for template_path in template_files:
-            self.parse(template_path)
+            self.load_definitions(template_path)
 
     def __repr__(self):
         """Object representation."""
@@ -230,9 +233,9 @@ class NodeDefs:
 
     def __getitem__(self, tag_name):
         """Get a tag by name."""
-        if tag_name not in self._tags:
+        if tag_name not in self._node_defs:
             raise UndefinedTagError(tag_name)
-        return self._tags[tag_name]
+        return self._node_defs[tag_name]
 
     def __setitem__(self, key, value):
         """Not supported."""
@@ -240,7 +243,28 @@ class NodeDefs:
             "Adding a tag definition directly is not supported"
         )
 
-    def parse(self, template_path: str | Path):
+    def load_uses(self, config: Dict):
+        """Load templates as indicated by the 'use' directive.
+
+        Arguments:
+        config (dict): parsed yaml config data.
+        """
+        if config is None or not isinstance(config, dict):
+            raise ValueError("config must be a dict")
+        if Keywords.Template.USE.value not in config:
+            return
+
+        use_decl = config[Keywords.Template.USE.value]
+        use_def = self._node_defs[Keywords.Template.USE.value]
+
+        use_paths = use_def.parse(use_decl)
+        for template_path in use_paths:
+            if not template_path.endswith(".yaml"):
+                template_path = f"{template_path}.yaml"
+            self.load_definitions(template_path)
+        del config[Keywords.Templates.USE.value]
+
+    def load_definitions(self, template_path: str | Path):
         """Load a configuration template file.
 
         Args:
@@ -278,8 +302,8 @@ class NodeDefs:
             elif tag_name == "description":
                 self._descriptions.append(node)
             else:
-                if tag_name in self._tags:
-                    existing_tag = self._tags[tag_name]
+                if tag_name in self._node_defs:
+                    existing_tag = self._node_defs[tag_name]
                     raise TemplateDefinitionError(
                         tag_name,
                         template_def["__line__"],
@@ -288,10 +312,10 @@ class NodeDefs:
                         f"defined in {existing_tag.file} at line "
                         f"{existing_tag.line_number}"
                     )
-                self._tags[tag_name] = NodeDef(
+                self._node_defs[tag_name] = NodeTemplate(
                     tag_name, node, template_path)
 
 
 if __name__ == "__main__":
-    template = NodeDefs(["ml.yaml"])
+    template = NodeTemplates(["ml.yaml"])
     print(template)

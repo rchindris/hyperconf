@@ -4,7 +4,7 @@ description: Provides basic configuration node definitions to be used in generic
 # The 'use' directive allows importing configuration defs from template files.
 # It has a single argument: a comma separated list of template names and/or paths.
 use:
- args:
-  - name: default
-    type: str
+ type: list[str]
+ description: A list of file paths containing object templates.
+
  

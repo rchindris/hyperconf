@@ -1,3 +1,3 @@
-from hyperconf.config import load
+from hyperconf.config import HyperConfig
 
-__all__=[load]
+__all__=[HyperConfig]
