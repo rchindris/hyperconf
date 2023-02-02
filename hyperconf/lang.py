@@ -44,14 +44,14 @@ class Keywords:
         IS_PROPERTY = "is-property"
 
 
-class htype(ABC):
+class hType(ABC):
     """Encapsulate value parsing and validation for a hyperconf type."""
 
     _supported_types = {}
 
     def __init__(self):
         """Initialize a htype."""
-        htype._supported_types[self.name] = self
+        hType._supported_types[self.name] = self
 
     @staticmethod
     def from_name(type_name):
@@ -59,14 +59,14 @@ class htype(ABC):
         if type_name is None or not isinstance(type_name, str):
             raise ValueError("type_name must be string")
 
-        if type_name in htype._supported_types:
-            return htype._supported_types[type_name]
+        if type_name in hType._supported_types:
+            return hType._supported_types[type_name]
         else:
-            list_match = hlist._regex.match(type_name)
+            list_match = hList._regex.match(type_name)
             if list_match:
-                return hlist(list_match.group(1))
-            elif hclassname.validate(type_name):
-                return hclassname()
+                return hList(list_match.group(1))
+            elif hClass.validate(type_name):
+                return hClass()
             else:
                 raise UnknownDataTypeError(type_name)
 
@@ -76,8 +76,8 @@ class htype(ABC):
         if typename is None or not isinstance(typename, str):
             raise ValueError("typename must be string")
 
-        list_match = hlist._regex.match(typename)
-        return list_match or typename in htype._supported_types
+        list_match = hList._regex.match(typename)
+        return list_match or typename in hType._supported_types
 
     @abstractmethod
     def validate(self, value):
@@ -111,7 +111,7 @@ class htype(ABC):
         ...
 
 
-class hstr(htype):
+class hStr(hType):
     """Plain string type."""
 
     name = Keywords.Types.STR.value
@@ -132,7 +132,7 @@ class hstr(htype):
         return ""
 
 
-class hbool(htype):
+class hBool(hType):
     """Boolean type."""
 
     name = Keywords.Types.BOOL.value
@@ -160,7 +160,7 @@ class hbool(htype):
         return False
 
 
-class hint(htype):
+class hInt(hType):
     """An integer type."""
 
     name = Keywords.Types.INT.value
@@ -190,7 +190,7 @@ class hint(htype):
         return 0
 
 
-class hfloat(htype):
+class hFloat(hType):
     """An integer type."""
 
     name = Keywords.Types.FLOAT.value
@@ -219,7 +219,7 @@ class hfloat(htype):
         return 0.0
 
 
-class hlist(htype):
+class hList(hType):
     """Generic list type."""
 
     name = Keywords.Types.LIST.value
@@ -228,7 +228,7 @@ class hlist(htype):
     def __init__(self, type_name):
         """Initialize a generic list type."""
         super().__init__()
-        self._generic_type = htype.from_name(type_name)
+        self._generic_type = hType.from_name(type_name)
 
     def __call__(self, value):
         """Convert a list literal to a python list, with validation."""
@@ -249,7 +249,7 @@ class hlist(htype):
         return []
 
 
-class hclassname(htype):
+class hClass(hType):
     """A python fully qualified type name."""
 
     name = Keywords.Types.CLASS_NAME.value
@@ -266,7 +266,7 @@ class hclassname(htype):
         """Validate a type name."""
         return value is not None and\
             isinstance(value, str) and\
-            hclassname._regex.match(value)
+            hClass._regex.match(value)
 
     @property
     def default_value(self):
@@ -275,5 +275,5 @@ class hclassname(htype):
 
 
 # Register types.
-_ = [hstr(), hint(), hbool(), hfloat(), hclassname(),
-     [hlist(_.value) for _ in Keywords.Types]]
+_ = [hStr(), hInt(), hBool(), hFloat(), hClass(),
+     [hList(_.value) for _ in Keywords.Types]]

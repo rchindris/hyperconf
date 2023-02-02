@@ -13,8 +13,7 @@ except ImportError:
 
 from hyperconf.yaml import LineInfoLoader
 from hyperconf.lang import (
-    htype,
-    hstr,
+    hType, hStr,
     Keywords
 )
 from hyperconf.errors import (
@@ -52,9 +51,9 @@ class ParameterDefinition:
                                           "Missing the 'name' property "
                                           "for argument.")
         self._name = node[Keywords.Parameter.NAME.value]
-        type_name = node.get(Keywords.Parameter.TYPE, hstr.name)
+        type_name = node.get(Keywords.Parameter.TYPE, hStr.name)
 
-        if not htype.is_supported(type_name):
+        if not hType.is_supported(type_name):
             raise TemplateDefinitionError(
                 element.name,
                 self._line,
@@ -62,7 +61,7 @@ class ParameterDefinition:
                 f"Parameter type '{type_name} is not supported."
             )
 
-        self._type = htype.from_name(type_name)
+        self._type = hType.from_name(type_name)
         self._required = node.get(Keywords.Parameter.REQUIRED, False)
         self._default_value = node.get(
             Keywords.Parameter.DEFAULT_VALUE,
@@ -109,13 +108,13 @@ class NodeTemplate:
         self._name = name
         self._description = node.get(Keywords.Template.DESCRIPTION.value, "")
 
-        self._type_name = node.get(Keywords.Template.TYPE.value, hstr.name)
-        if not htype.is_supported(self._type_name):
+        self._type_name = node.get(Keywords.Template.TYPE.value, hStr.name)
+        if not hType.is_supported(self._type_name):
             raise TemplateDefinitionError(self._name,
                                           node["__line__"], self._file,
                                           f"The type {self._type_name} is "
                                           "not supported")
-        self._type = htype.from_name(self._type_name)
+        self._type = hType.from_name(self._type_name)
 
         self._required = node.get(Keywords.Template.REQUIRED, False)
 
