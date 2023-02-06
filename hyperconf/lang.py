@@ -65,10 +65,12 @@ class hType(ABC):
             list_match = hList._regex.match(type_name)
             if list_match:
                 return hList(list_match.group(1))
-            elif hClass.validate(type_name):
+
+            hclass_match = hClass._regex.match(type_name)
+            if hclass_match:
                 return hClass()
-            else:
-                raise UnknownDataTypeError(type_name)
+
+            raise UnknownDataTypeError(type_name)
 
     @staticmethod
     def is_supported(typename):
@@ -76,8 +78,15 @@ class hType(ABC):
         if typename is None or not isinstance(typename, str):
             raise ValueError("typename must be string")
 
+        if typename in hType._supported_types:
+            return True
+
         list_match = hList._regex.match(typename)
-        return list_match or typename in hType._supported_types
+        if list_match:
+            return True
+
+        return hClass._regex.match(typename)
+
 
     @abstractmethod
     def validate(self, value):

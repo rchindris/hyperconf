@@ -242,6 +242,12 @@ class NodeTemplates:
             "Adding a tag definition directly is not supported"
         )
 
+    def get(self, key, default_val):
+        """Return the value for the key or default value."""
+        if key not in self._node_defs:
+            return default_val
+        return self._node_defs[key]
+
     def load_uses(self, config: Dict):
         """Load templates as indicated by the 'use' directive.
 
@@ -261,7 +267,7 @@ class NodeTemplates:
             if not template_path.endswith(".yaml"):
                 template_path = f"{template_path}.yaml"
             self.load_definitions(template_path)
-        del config[Keywords.Templates.USE.value]
+        del config[Keywords.Template.USE.value]
 
     def load_definitions(self, template_path: str | Path):
         """Load a configuration template file.

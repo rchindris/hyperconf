@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hyperconf"
 version = "0.1.0"
-description = "ML experiment configuration manager."
+description = "A Python configuration library and mini-DSL aimed primarily at configuring ML experiments."
 authors = ["Radu Chindrix <radu.chindris@gmail.com>"]
 license = "MIT"
 

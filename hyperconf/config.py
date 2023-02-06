@@ -1,18 +1,14 @@
 """Provide configuration loading utilities."""
+from collections import UserDict
+from pathlib import Path
+
+
 import yaml
 
-from collections import UserDict
-
-from pathlib import Path
-from typing import Dict
-
 from hyperconf.yaml import LineInfoLoader
-from hyperconf.errors import (
-    InvalidYamlError,
-    UndefinedTagError
-)
-
+from hyperconf.errors import InvalidYamlError, UndefinedTagError
 from hyperconf.templates import NodeTemplates
+
 
 
 class HyperConfig(UserDict):
@@ -34,7 +30,6 @@ class HyperConfig(UserDict):
         self._templates.load_uses(config)
 
         for decl_name, decl in config.items():
-            print(decl_name, decl)
             node_def = self._templates.get(decl_name, None)
             decl_line = decl["__line__"] if "__line__" in decl else None
 
@@ -44,10 +39,11 @@ class HyperConfig(UserDict):
                                          config_path)
             try:
                 self.data[decl_name] = node_def.parse(decl)
-            except ...:
+            except Exception as e:
+                print(e)
                 # TODO proper error handling
                 if allow_undefined:
-                    raise InvalidYamlError(decl_name)
+                    raise InvalidYamlError(config_path, decl_name)
 
     def _read_yaml(self, path: str | Path):
         if path is None:
@@ -69,5 +65,7 @@ class HyperConfig(UserDict):
 
         return config_yaml
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     hc = HyperConfig("test_config.yaml")
+    print(hc)
