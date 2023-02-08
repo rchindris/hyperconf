@@ -5,6 +5,10 @@ description: Machine Learning experiment configuration.
 model:
   required: true
   type: classname
+  args:
+   - name: name
+     type: str
+
   
 # Train parameters are required.
 train:

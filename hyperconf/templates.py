@@ -18,14 +18,15 @@ from hyperconf.lang import (
 )
 from hyperconf.errors import (
     TemplateDefinitionError,
-    UndefinedTagError
+    UndefinedTagError,
+    UnkownOptionError
 )
 
 
 _logger = logging.getLogger(__name__)
 
 
-class ParameterDefinition:
+class OptionDefinition:
     """A configuration element parameter definition."""
 
     def __init__(self, node: Dict, element):
@@ -89,7 +90,7 @@ class ParameterDefinition:
         return self._default_value
 
 
-class NodeTemplate:
+class ObjectTemplate:
     """Configuration object template definition."""
 
     def __init__(self, name: str, node: Dict, template_path: str = None):
@@ -114,33 +115,28 @@ class NodeTemplate:
                                           node["__line__"], self._file,
                                           f"The type {self._type_name} is "
                                           "not supported")
+
         self._type = hType.from_name(self._type_name)
-
         self._required = node.get(Keywords.Template.REQUIRED, False)
-
         self._line = node.get("__line__")
-        self._params = []
+        self._opts = {}
 
-        if Keywords.Template.ARGS in node:
-            arg_defs = node[Keywords.Template.ARGS]
+        if Keywords.Template.OPTS.value in node:
+            arg_defs = node[Keywords.Template.OPTS.value]
             if not isinstance(arg_defs, list):
                 raise TemplateDefinitionError(
-                    "args",
+                    Keywords.Template.OPTS.value,
                     arg_defs["__line__"], self._file,
-                    "The component definition arguments must be "
-                    "specified as a list.")
+                    "The configuration options must be specified as a list.")
 
-        for arg_name, arg_def in node.items():
-            if arg_name == Keywords.Template.ARGS:
-                for arg in arg_def:
-                    self._params.append(ParameterDefinition(arg, self))
+            for adef in arg_defs:
+                self._opts[adef["name"]] = OptionDefinition(adef, self)
 
     def __repr__(self):
         """Object representation."""
         text = f"[tag: {self._name}, type:{self._type_name}, "\
             f"description: '{self._description}', args: ("
-
-        for elem in self._params:
+        for _, elem in self._opts.items():
             text += str(elem)
         text += ")]"
         return text
@@ -157,6 +153,18 @@ class NodeTemplate:
         if not isinstance(decl, dict):
             return self._type(decl)
         return decl
+
+    def get_arg(self, arg_name: str):
+        """Return an argument template."""
+        if arg_name is None:
+            raise ValueError("arg_name is None")
+        if arg_name not in self._opts:
+            raise UnkownOptionError(self._name, arg_name)
+        return self._opts[arg_name]
+
+    def get_args(self):
+        """Return a list of suported options."""
+        return self._opts.values()
 
     @property
     def name(self):
@@ -179,8 +187,35 @@ class NodeTemplate:
         return self._line
 
 
-class NodeTemplates:
+class ObjectTemplates:
     """Define the elements allowed in an experiment configuration file."""
+
+    @staticmethod
+    def resolve(config: Dict):
+        """Load templates as indicated by the 'use' directive.
+
+        Arguments:
+        config (dict): parsed yaml config data.
+        """
+        if config is None or not isinstance(config, dict):
+            raise ValueError("config must be a dict")
+
+        templates = ObjectTemplates()
+        if Keywords.Template.USE.value not in config:
+            return templates
+
+        use_decl = config[Keywords.Template.USE.value]
+        use_def = templates.get(Keywords.Template.USE.value,
+                                "")
+
+        use_paths = use_def.parse(use_decl)
+        for template_path in use_paths:
+            if not template_path.endswith(".yaml"):
+                template_path = f"{template_path}.yaml"
+            templates.load(template_path)
+        del config[Keywords.Template.USE.value]
+
+        return templates
 
     def __init__(self, template_file: str | Path | List[str] | List[Path]
                  = "builtins.yaml"):
@@ -220,7 +255,7 @@ class NodeTemplates:
         self._node_defs = {}
 
         for template_path in template_files:
-            self.load_definitions(template_path)
+            self.load(template_path)
 
     def __repr__(self):
         """Object representation."""
@@ -248,28 +283,7 @@ class NodeTemplates:
             return default_val
         return self._node_defs[key]
 
-    def load_uses(self, config: Dict):
-        """Load templates as indicated by the 'use' directive.
-
-        Arguments:
-        config (dict): parsed yaml config data.
-        """
-        if config is None or not isinstance(config, dict):
-            raise ValueError("config must be a dict")
-        if Keywords.Template.USE.value not in config:
-            return
-
-        use_decl = config[Keywords.Template.USE.value]
-        use_def = self._node_defs[Keywords.Template.USE.value]
-
-        use_paths = use_def.parse(use_decl)
-        for template_path in use_paths:
-            if not template_path.endswith(".yaml"):
-                template_path = f"{template_path}.yaml"
-            self.load_definitions(template_path)
-        del config[Keywords.Template.USE.value]
-
-    def load_definitions(self, template_path: str | Path):
+    def load(self, template_path: str | Path):
         """Load a configuration template file.
 
         Args:
@@ -311,16 +325,16 @@ class NodeTemplates:
                     existing_tag = self._node_defs[tag_name]
                     raise TemplateDefinitionError(
                         tag_name,
-                        template_def["__line__"],
+                        template_def[LineInfoLoader.LINE_KEY],
                         template_path,
                         "Duplicate tag definition. This tag is already "
                         f"defined in {existing_tag.file} at line "
                         f"{existing_tag.line_number}"
                     )
-                self._node_defs[tag_name] = NodeTemplate(
+                self._node_defs[tag_name] = ObjectTemplate(
                     tag_name, node, template_path)
 
 
 if __name__ == "__main__":
-    template = NodeTemplates(["ml.yaml"])
+    template = ObjectTemplates(["ml.yaml"])
     print(template)

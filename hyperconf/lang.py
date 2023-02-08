@@ -32,7 +32,7 @@ class Keywords:
         NAME = "name"
         DESCRIPTION = "description"
         REQUIRED = "required"
-        ARGS = "args"
+        OPTS = "options"
 
     class Parameter(Enum):
         """Define paramter definition keywords."""
