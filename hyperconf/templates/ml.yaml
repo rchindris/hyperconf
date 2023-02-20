@@ -5,7 +5,7 @@ description: Machine Learning experiment configuration.
 model:
   required: true
   type: classname
-  args:
+  options:
    - name: name
      type: str
 

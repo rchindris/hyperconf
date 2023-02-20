@@ -1,9 +1,9 @@
-"""Provide configuration tag definition support."""
-import yaml
+"""Configuration node template support."""
 import logging
-
 from pathlib import Path
 from typing import Dict, List
+
+import yaml
 
 try:
     from importlib import resources
@@ -11,23 +11,34 @@ except ImportError:
     raise ImportError("Could not find module importlib.resources."
                       "Python versions <3.7 are not supported.")
 
+from hyperconf.errors import (TemplateDefinitionError, UndefinedTagError,
+                              UnkownOptionError)
+from hyperconf.lang import Keywords, hStr, hType
 from hyperconf.yaml import LineInfoLoader
-from hyperconf.lang import (
-    hType, hStr,
-    Keywords
-)
-from hyperconf.errors import (
-    TemplateDefinitionError,
-    UndefinedTagError,
-    UnkownOptionError
-)
-
 
 _logger = logging.getLogger(__name__)
 
 
 class OptionDefinition:
-    """A configuration element parameter definition."""
+    """Define a configuration option template.
+
+    An option template specifies the name, type and other attributes
+    of an configuration option. Supported attributes are:
+
+        - name (str): the option name, must be a valid identifier
+          for the file format of the configuration file.
+        - type (:class:`htype`): the data type of the option.
+        - required (bool): if True, this is a required option. Defaults to: False.
+        - default_value (str): the default value for this option, to be used when
+          *reqiured* is False.
+
+    Example::
+      # Common database configuration templates.
+      db_connection:
+        options:
+          - name: host
+            type: str
+    """
 
     def __init__(self, node: Dict, element):
         """Initialize tag argument from spec.
@@ -91,7 +102,13 @@ class OptionDefinition:
 
 
 class ObjectTemplate:
-    """Configuration object template definition."""
+    """Define a configuration object.
+
+    A configuration object definition specifies the name and type of the
+    object and the list of the supported configuration options.
+
+
+    """
 
     def __init__(self, name: str, node: Dict, template_path: str = None):
         """Initialize a NodeTemplate.
@@ -333,8 +350,3 @@ class ObjectTemplates:
                     )
                 self._node_defs[tag_name] = ObjectTemplate(
                     tag_name, node, template_path)
-
-
-if __name__ == "__main__":
-    template = ObjectTemplates(["ml.yaml"])
-    print(template)

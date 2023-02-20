@@ -1,27 +1,29 @@
-"""Provide configuration loading utilities."""
+"""Load and access configuration data."""
 from collections import UserDict
 from pathlib import Path
 
-
 import yaml
-
-from hyperconf.yaml import LineInfoLoader
 from hyperconf.errors import HyperConfError, UndefinedTagError
 from hyperconf.templates import ObjectTemplates
+from hyperconf.yaml import LineInfoLoader
 
 
-def load(path: str | Path = None,
-         allow_undefined: bool = True):
+def load_yaml(path: str | Path = None,
+              allow_undefined: bool = True):
     """Parse a YAML configuration file.
 
-    Arguments:
-    config_path (Dict): a dictionary containing configuration keys and
-        values. May be a result of parsing a YAML file.
-    strict (bool): if True, require that any configuration key has
-        a definition in one of the referenced template files. Default: True.
+    :param config_path: path to a *YAML* file.
+    :param strict: require that any YAML node is defined. Defaults to True.
+    :return: a :class:`HyperConfig` instance.
+    :type config_path: dict
+    :type strict: bool
+    :rtype: :class:`HyperConfig`
+    :raises ValueError: when the path is None, not a str or Path.
+    :raises IOError: when the file cannot be found.
+    :raises HyperConfError: when the file is invalid.
     """
-    if path is None:
-        raise ValueError("path is None. Please provide a valid "
+    if path is None or not isinstance(path, str) or not isinstance(path, Path):
+        raise ValueError("Invalid value for 'path'. Please provide a valid "
                          "string or Path object.")
     if isinstance(path, str):
         path = Path(path)
@@ -59,19 +61,61 @@ def load(path: str | Path = None,
 
 
 class HyperConfig(UserDict):
-    """An object containing configuration."""
+    """Provide configuration values.
+
+    A :class:`HyperConfig` instance is the result of parsing a dictionary
+    containing configuration options, typically obtained through loading a
+    YAML file by using the :func:`load_yaml` function.
+
+    *Accesssing values*
+    -------------------
+
+
+    Configuration values can be of primitive types or can be nested. The
+    configuration data can be acessed in two ways:
+
+    - using dictionary syntax, with string keys::
+
+        >> config = hyperconfig.config.load("test_config.yaml")
+        >> config["database"]["hostname"]
+
+    - using property syntax::
+
+        >> config = hyperconfig.config.load("test_config.yaml")
+        >> config.database.hostname
+
+    Since :class:`HyperConfig` is a :class:`UserDict``, instances of it
+    can be used like any Python dictionary. However, it is readonly, modifying
+    configuration values is forbidded.
+
+    *Templates, parsing and validation*
+    -----------------------------------
+
+    *hyperconf* is more than a simple YAML loader: it validates the
+    configuration structure and values against a *configuration template*. A
+    configuration template defines the required configuration nodes, the node
+    contents and the data format for configuration options,
+    see :mod:`hyperconf.templates` for details.
+
+    The node template is available for each :class:`HyperConfig` instance
+    through the *__meta__* property::
+
+        >> config = hyperconfig.config.load("test_config.yaml")
+        >> config.database.__meta__
+
+    When a :class:`HyperConfig` is initialized in *strict* mode, each
+    configuration object is required to have a template available and it is
+    validated agains it's definition.
+    """
 
     def __init__(self, config, templates,
                  definition=None, config_path=None, strict=True):
-        """Initialize a HyperConfig object from a dictionary.
+        """Instance initalization.
 
-        Arguments:
-        config (dict): a dictionary containing object declarations.
-        templates (ObjectTemplates): templates for the nodes in this config.
-        definition (ObjectTemplates): the definition for this configuration object.
-        config_path (str): configuration file path.
-        strict (bool): when True, require that every node is defined.
-        Default: True.
+        :param config: map containing configuration keys and values.
+        :type config: dict
+        :param templates: object template definitions.
+        :type templates:  :class:`ObjectTemplates`
         """
         self.data = {}
 
@@ -117,7 +161,7 @@ class HyperConfig(UserDict):
                 except Exception as e:
                     raise HyperConfError(
                         f"Error while parsing node "
-                        f"'{decl_name}'. Cause: {e}"
+                        f"'{decl_name}'. Cause {e}"
                     )
             else:
                 # Argument
@@ -126,7 +170,15 @@ class HyperConfig(UserDict):
                 self.data[decl_name] = arg_val
                 setattr(self, decl_name, arg_val)
 
+    def __setitem__(self, key, item):
+        """Not supported."""
+        raise NotImplementedError("HyperConfig is readonly.")
+
+    def __delitem__(self, key):
+        """Not supported."""
+        raise NotImplementedError("HyperConfig is readonly.")
+
 
 if __name__ == "__main__":
-    hc = load("test_config.yaml", allow_undefined=False)
-    print(hc.model)
+    hc = load_yaml("test_config.yaml", allow_undefined=False)
+    print(hc)

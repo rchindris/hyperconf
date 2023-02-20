@@ -7,4 +7,16 @@ use:
  type: list[str]
  description: A list of file paths containing object templates.
 
- 
+# Common database configuration templates.
+db_connection:
+ options:
+    - name: name
+      type: str
+    - name: host
+      type: str
+    - name: database
+      type: str
+    - name: username
+      type: str
+    - name: password
+      type: str

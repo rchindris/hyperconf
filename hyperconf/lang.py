@@ -87,7 +87,6 @@ class hType(ABC):
 
         return hClass._regex.match(typename)
 
-
     @abstractmethod
     def validate(self, value):
         """Provide value validation.
