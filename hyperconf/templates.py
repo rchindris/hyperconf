@@ -19,7 +19,7 @@ from hyperconf.yaml import LineInfoLoader
 _logger = logging.getLogger(__name__)
 
 
-class OptionDefinition:
+class OptionDef:
     """Define a configuration option template.
 
     An option template specifies the name, type and other attributes
@@ -38,9 +38,11 @@ class OptionDefinition:
         options:
           - name: host
             type: str
+          - name: database
+            type: str
     """
 
-    def __init__(self, node: Dict, element):
+    def __init__(self, node: Dict, element, known_types):
         """Initialize tag argument from spec.
 
         Args:
@@ -56,21 +58,26 @@ class OptionDefinition:
             raise ValueError("element is None")
 
         self._line = node["__line__"]
-        if "name" not in node:
-            raise TemplateDefinitionError(element.name,
-                                          self._line,
-                                          element.file,
-                                          "Missing the 'name' property "
-                                          "for argument.")
-        self._name = node[Keywords.Parameter.NAME.value]
-        type_name = node.get(Keywords.Parameter.TYPE, hStr.name)
 
+        for req_prop in [
+            Keywords.Parameter.NAME.value,
+            Keywords.Parameter.TYPE.value
+        ]:
+            if req_prop not in node:
+                raise TemplateDefinitionError(element.name,
+                                              self._line,
+                                              element.file,
+                                              "Missing the 'name' property "
+                                              "for argument.")
+        self._name = node[Keywords.Parameter.NAME.value]
+
+        type_name = node[Keywords.Parameter.TYPE.value]
         if not hType.is_supported(type_name):
             raise TemplateDefinitionError(
                 element.name,
                 self._line,
                 element.file,
-                f"Parameter type '{type_name} is not supported."
+                f"Parameter type '{type_name}' is not supported."
             )
 
         self._type = hType.from_name(type_name)
@@ -101,13 +108,11 @@ class OptionDefinition:
         return self._default_value
 
 
-class ObjectTemplate:
+class ObjectDef:
     """Define a configuration object.
 
     A configuration object definition specifies the name and type of the
     object and the list of the supported configuration options.
-
-
     """
 
     def __init__(self, name: str, node: Dict, template_path: str = None):
@@ -147,7 +152,7 @@ class ObjectTemplate:
                     "The configuration options must be specified as a list.")
 
             for adef in arg_defs:
-                self._opts[adef["name"]] = OptionDefinition(adef, self)
+                self._opts[adef["name"]] = OptionDef(adef, self)
 
     def __repr__(self):
         """Object representation."""
@@ -204,12 +209,12 @@ class ObjectTemplate:
         return self._line
 
 
-class ObjectTemplates:
+class ConfigDefinitions:
     """Define the elements allowed in an experiment configuration file."""
 
     @staticmethod
-    def resolve(config: Dict):
-        """Load templates as indicated by the 'use' directive.
+    def load_references(config: Dict):
+        """Load referenced templates as indicated by the 'use' directive(s).
 
         Arguments:
         config (dict): parsed yaml config data.
@@ -217,13 +222,12 @@ class ObjectTemplates:
         if config is None or not isinstance(config, dict):
             raise ValueError("config must be a dict")
 
-        templates = ObjectTemplates()
+        templates = ConfigDefinitions()
         if Keywords.Template.USE.value not in config:
             return templates
 
         use_decl = config[Keywords.Template.USE.value]
-        use_def = templates.get(Keywords.Template.USE.value,
-                                "")
+        use_def = templates.get(Keywords.Template.USE.value, "")
 
         use_paths = use_def.parse(use_decl)
         for template_path in use_paths:
@@ -236,7 +240,7 @@ class ObjectTemplates:
 
     def __init__(self, template_file: str | Path | List[str] | List[Path]
                  = "builtins.yaml"):
-        """Initialize an experiment template from file.
+        """Load config definitions from file.
 
         Arguments:
         template_file (str | Path | List[str] | List[Path]): the path or paths
@@ -333,9 +337,9 @@ class ObjectTemplates:
         for tag_name, node in template_def.items():
             if tag_name == "__line__":
                 continue
-            elif tag_name == "name":
+            elif tag_name == Keywords.Template.NAME.value:
                 self._names.append(node)
-            elif tag_name == "description":
+            elif tag_name == Keywords.Template.DESCRIPTION.value:
                 self._descriptions.append(node)
             else:
                 if tag_name in self._node_defs:
@@ -348,5 +352,5 @@ class ObjectTemplates:
                         f"defined in {existing_tag.file} at line "
                         f"{existing_tag.line_number}"
                     )
-                self._node_defs[tag_name] = ObjectTemplate(
+                self._node_defs[tag_name] = ObjectDef(
                     tag_name, node, template_path)

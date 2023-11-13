@@ -4,7 +4,6 @@ from pathlib import Path
 
 import yaml
 from hyperconf.errors import HyperConfError, UndefinedTagError
-from hyperconf.templates import ObjectTemplates
 from hyperconf.yaml import LineInfoLoader
 
 
@@ -22,7 +21,8 @@ def load_yaml(path: str | Path = None,
     :raises IOError: when the file cannot be found.
     :raises HyperConfError: when the file is invalid.
     """
-    if path is None or not isinstance(path, str) or not isinstance(path, Path):
+    if path is None or (not isinstance(path, str) and
+                        not isinstance(path, Path)):
         raise ValueError("Invalid value for 'path'. Please provide a valid "
                          "string or Path object.")
     if isinstance(path, str):
@@ -36,31 +36,18 @@ def load_yaml(path: str | Path = None,
 
     with open(path) as tfile:
         try:
-            config_yaml = yaml.load(tfile, Loader=LineInfoLoader)
+            config_values = yaml.load(tfile, Loader=LineInfoLoader)
         except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
             raise HyperConfError(
                 f"Failed to load file {path}. Cause: {repr(e)}"
             )
 
-    if "__line__" in config_yaml:
+    if "__line__" in config_values:
         # The loader adds a __line__: 1 for the top level node.
-        del config_yaml["__line__"]
-
-    try:
-        templates = ObjectTemplates.resolve(config_yaml)
-        return HyperConfig(
-            config_yaml,
-            templates,
-            config_path=path.as_posix(),
-            strict=not allow_undefined
-        )
-    except HyperConfError as e:
-        raise HyperConfError(
-            f"Failed to load configuration from '{path}': {str(e)}"
-        )
+        del config_values["__line__"]
 
 
-class HyperConfig(UserDict):
+class Config(UserDict):
     """Provide configuration values.
 
     A :class:`HyperConfig` instance is the result of parsing a dictionary
@@ -117,6 +104,7 @@ class HyperConfig(UserDict):
         :param templates: object template definitions.
         :type templates:  :class:`ObjectTemplates`
         """
+        print(config)
         self.data = {}
 
         if "__line__" in config:
@@ -137,6 +125,8 @@ class HyperConfig(UserDict):
                     )
 
         for decl_name, decl in config.items():
+            print("--- ", decl)
+
             if isinstance(decl, dict):
                 # Nested configuration object.
                 node_def = templates.get(decl_name, None)
@@ -150,7 +140,7 @@ class HyperConfig(UserDict):
                             config_path
                         )
                 try:
-                    nested_obj = HyperConfig(
+                    nested_obj = Config(
                         decl, templates, node_def,
                         config_path, strict
                     )
@@ -161,14 +151,18 @@ class HyperConfig(UserDict):
                 except Exception as e:
                     raise HyperConfError(
                         f"Error while parsing node "
-                        f"'{decl_name}'. Cause {e}"
+                        f"'{decl_name}'. Cause: {e}"
                     )
             else:
-                # Argument
-                arg_def = definition.get_arg(decl_name)
-                arg_val = arg_def.type(decl)
-                self.data[decl_name] = arg_val
-                setattr(self, decl_name, arg_val)
+                try:
+                    arg_def = definition.get_arg(decl_name)
+                    arg_val = arg_def.type(decl)
+                    self.data[decl_name] = arg_val
+                    setattr(self, decl_name, arg_val)
+                except ValueError as e:
+                    raise HyperConfError(
+                        f"Error while parsing option {decl_name}."
+                        f"Cause: {e}", decl_line)
 
     def __setitem__(self, key, item):
         """Not supported."""

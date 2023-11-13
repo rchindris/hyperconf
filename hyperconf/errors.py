@@ -16,9 +16,9 @@ class HyperConfError(Exception):
             line_info += f"at line {str(line)}"
         if config_path:
             line_info += f", in '{str(config_path)}'"
-
         message = f"{message} ({line_info})" if\
             line_info != "" else message
+
         super().__init__(message)
 
 
@@ -29,18 +29,35 @@ class TemplateDefinitionError(HyperConfError):
                  config_path: str = None):
         """Initialize a TemplateDefinitionError.
 
-        Arguments:
-        name (str): the tag name where the error occurs.
-        messagfe (str): the error message.
-        line (int): line number where the tag is located.
-        cofnig_path (str): the path to the template definition file.
+        :param name: object definition name.
+        :param message: the error message.
+        :param line: error line number.
+        :param config_path: the path to the template definition file.
         """
-        super().__init__
-        (
-            f"Failed to parse template definition for "
-            f"tag '{name}':  {message}",
-            line, config_path
-        )
+        msg = "Failed to parse template definition for " +\
+            "tag '{name}':  {message}".format(
+                name=name,
+                message=message
+            )
+        super().__init__(msg, line, config_path)
+
+
+class DuplicateDefError(HyperConfError):
+    """Signals that a type has more than one definition."""
+
+    def __init__(self, existing_def, new_def):
+        """Initialize exception instance.
+
+        :param existing_def: existing type definition.
+        :param new_def: new definition with the same name.
+        """
+        msg = f"Duplicated type definition for type name {new_def}."
+        if existing_def.file is not None:
+            msg += f" The type was already defined in {existing_def.file} at"
+            f" line {existing_def.line}"
+        else:
+            msg += f" The type was already defined as '{existing_def}'."
+        super().__init__(msg, new_def.line, new_def.file)
 
 
 class UndefinedTagError(HyperConfError):
@@ -54,7 +71,6 @@ class UndefinedTagError(HyperConfError):
         line (int): line number where the definition occurs.
         config_path (str): template definition file path.
         """
-        print("ADLSJFA", line, config_path)
         super().__init__
         (
             f"Could not find a definition for tag {name}",
