@@ -68,5 +68,32 @@ def test_reference_def():
       opt1: int
       opt2: test_def
     """
-    types = parse_definitions(yaml.load(defs, LineInfoLoader))
-    print(types[1])
+    parse_definitions(yaml.load(defs, LineInfoLoader))
+
+
+def test_parse_invalid_use():
+    defs = """
+    use:
+     some_opt: str
+     other_opt: int
+    """
+    with pytest.raises(err.TemplateDefinitionError,
+                       match=".*must.*file.*path.*"):
+        parse_definitions(yaml.load(defs, LineInfoLoader))
+
+
+def test_parse_use_not_found():
+    defs = """
+    use: invalid_path
+    """
+    with pytest.raises(err.TemplateDefinitionError,
+                       match=".*Failed.*to.*load.*"):
+        parse_definitions(yaml.load(defs, LineInfoLoader))
+
+
+def test_parse_valid_use():
+    defs = """
+    use: ./tests/defs
+    """
+    parse_definitions(yaml.load(defs, LineInfoLoader))
+    assert TypeRegistry.contains("ref1")

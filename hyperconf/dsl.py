@@ -1,7 +1,15 @@
 """Defing the HyperConf template language."""
+import yaml
 import typing as t
 
+from pathlib import Path
+try:
+    from importlib import resources
+except ImportError:
+    raise ImportError("Could not find module importlib.resources."
+                      "Python versions <3.7 are not supported.")
 import hyperconf.errors as err
+from hyperconf.yaml import LineInfoLoader
 
 
 class Keywords:
@@ -10,6 +18,8 @@ class Keywords:
     validator = "_validator"
     typename = "_type"
     required = "_required"
+    line = "__line__"
+    use = "use"
     HDef = [validator, typename, required]
 
 
@@ -24,6 +34,7 @@ class hdef:
                  validator: str = None,
                  options: t.List = []):
         """ Initialize a configuration object definition.
+
         :param name:
          the object name. Must start with a letter or '_' and
          cannot contain whitespace and special characters.
@@ -46,7 +57,9 @@ class hdef:
         self.options = options
 
     def __repr__(self):
-        return f"{self.name}: {self.typename}"
+        """Debug str representation."""
+        return f"{self.name} ({self.typename}) "\
+            f"opts: {[o.name for o in self.options]}"
 
 
 class TypeRegistry:
@@ -67,10 +80,7 @@ class TypeRegistry:
             hdefs = [hdefs]
 
         for hdef in hdefs:
-            print("register ", hdef)
-            print("contents: ", [(k, v) for k, v in TypeRegistry._typedefs.items()])
             if hdef.name in TypeRegistry._typedefs:
-                print("duplicate ", hdef.name, TypeRegistry._typedefs[hdef.name])
                 raise err.DuplicateDefError(
                     TypeRegistry._typedefs[hdef.name], hdef
                 )
@@ -95,6 +105,7 @@ class TypeRegistry:
 
 def _parse_complex_def(tname, tdef, fname):
     """Parse a multi-option configuration object definition.
+
     :param tname:
       type name
     :param tdef:
@@ -107,9 +118,9 @@ def _parse_complex_def(tname, tdef, fname):
         raise ValueError("tdef is None")
 
     _tdef = tdef.copy()
-    if "__line__" in _tdef:
-        def_line = _tdef["__line__"]
-        del _tdef["__line__"]
+    if Keywords.line in _tdef:
+        def_line = _tdef[Keywords.line]
+        del _tdef[Keywords.line]
 
     if tname is None:
         raise ValueError("tname is None")
@@ -119,6 +130,7 @@ def _parse_complex_def(tname, tdef, fname):
     type_name = _tdef.get(Keywords.typename, tname)
     is_required = _tdef.get(Keywords.required, False)
     validator = _tdef.get(Keywords.validator, None)
+
     if validator:
         #TODO: make sure the validator exists.
         pass
@@ -137,19 +149,25 @@ def _parse_complex_def(tname, tdef, fname):
                 message="Invalid type definition. Unsupported "
                 f"YAML type '{_tdef.__class__}' for option definition.")
         if isinstance(aval, dict):
+            opt_line = def_line
+            if Keywords.line in aval:
+                opt_line = aval[Keywords.line]
+                del aval[Keywords.line]
+
             # An option specified as dict.
             for akey in aval.keys():
                 if akey not in Keywords.HDef:
                     raise err.TemplateDefinitionError(
                         name=tname,
-                        line=def_line,
+                        line=opt_line,
                         message="Invalid option definition: "
                         f"found unexpected key '{akey}'. "
                         "Please note that nesting definitions is not allowed.")
-            opts.append(hdef(typename=aval["typename"],
-                             required=aval.get("required", True),
-                             validator=aval.get("validator", ""),
-                             line=def_line,
+            opts.append(hdef(name=aname,
+                             typename=aval.get(aval[Keywords.typename], str),
+                             required=aval.get(Keywords.required, True),
+                             validator=aval.get(Keywords.validator, None),
+                             line=opt_line,
                              fpath=fname))
         else:
             opts.append(hdef(name=aname, typename=aval))
@@ -184,12 +202,22 @@ def parse_definitions(defs: t.Dict, fname: str = None):
     def_line = 0
 
     for tname, tdef in defs.items():
-        if tname == "__line__":
+        if tname == Keywords.line:
             def_line = tdef
             continue
 
+        if tname == "use":
+            # Load referenced definitions.
+            if not isinstance(tdef, str):
+                raise err.TemplateDefinitionError(
+                    name=Keywords.use,
+                    message=f"The built-in '{Keywords.use}' directive"
+                    "must specify a file path.",
+                    line=def_line)
+            parse_use_ref(tdef, line=def_line, ref_file=fname)
+            continue
+
         if isinstance(tdef, dict):
-            print("parsing ", tname, tdef)
             definition = _parse_complex_def(tname, tdef, fname)
             typedefs.append(definition)
         elif isinstance(tdef, str):
@@ -200,5 +228,53 @@ def parse_definitions(defs: t.Dict, fname: str = None):
                 line=def_line,
                 message="Invalid type definition. Unsupported "
                 f"YAML type {tdef.__class__} for type definition.")
+
     TypeRegistry.add(typedefs)
     return typedefs
+
+
+def parse_use_ref(template_path: str, line: int, ref_file: str):
+    """Load and parse referred template file.
+
+    :param template_path:
+     the path to the template file. It can be an absolute path,
+     a relative path to the current working directory or a
+     package resource (relative) path.
+    :param line:
+     the line at which the use directive occurs.
+    :param ref_file:
+     the file that contains the use directive.
+    """
+    if not template_path.endswith(".yaml"):
+        template_path = template_path + ".yaml"
+
+    template_path = Path(template_path) if \
+        isinstance(template_path, str) else template_path
+
+    print("loading ", template_path.absolute())
+
+    if not template_path.exists():
+        # Search for a packaged resource
+        # having the same name (predefined template).
+        pkg_files = resources.files("hyperconf")
+        pkg_path = pkg_files / "templates" / template_path.name
+
+        if not pkg_path.exists():
+            raise err.TemplateDefinitionError(
+                name=Keywords.use,
+                message=f"Failed to load template '{template_path}'. "
+                "Could not find a file or a resource with that name.",
+                line=line,
+                config_path=ref_file)
+
+    with open(template_path) as tfile:
+        try:
+            return parse_definitions(
+                yaml.load(tfile, Loader=LineInfoLoader),
+                fname=template_path.as_posix())
+        except yaml.scanner.ScannerError as e:
+            raise err.TemplateDefinitionError(
+                name=Keywords.use,
+                message=f"Invalid YAML file: {e}",
+                line=line,
+                config_path=ref_file)
