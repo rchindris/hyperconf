@@ -1,178 +1,95 @@
 """Load and access configuration data."""
-from collections import UserDict
 from pathlib import Path
 
 import yaml
-from hyperconf.errors import HyperConfError, UndefinedTagError
+import hyperconf.errors as err
+import hyperconf.dsl as dsl
 from hyperconf.yaml import LineInfoLoader
 
 
-def load_yaml(path: str | Path = None,
-              allow_undefined: bool = True):
-    """Parse a YAML configuration file.
+class HyperConfig(dict):
+    """Configuration file parser.
 
-    :param config_path: path to a *YAML* file.
-    :param strict: require that any YAML node is defined. Defaults to True.
-    :return: a :class:`HyperConfig` instance.
-    :type config_path: dict
-    :type strict: bool
-    :rtype: :class:`HyperConfig`
-    :raises ValueError: when the path is None, not a str or Path.
-    :raises IOError: when the file cannot be found.
-    :raises HyperConfError: when the file is invalid.
+    This class provides schema validation by using configuration template
+    definitions and configuration value validation.
+    Accessing values can be done in a dict-like manner on by acessing
+    attributes. All top-level configuration keys are exposed as attributes.
     """
-    if path is None or (not isinstance(path, str) and
-                        not isinstance(path, Path)):
-        raise ValueError("Invalid value for 'path'. Please provide a valid "
-                         "string or Path object.")
-    if isinstance(path, str):
-        path = Path(path)
 
-    if not path.exists() or not path.is_file():
-        raise IOError(
-            f"Could not load the configuration from {path}. "
-            "Please check that the file exists."
-        )
+    @staticmethod
+    def load_yaml(path: str | Path = None, strict: bool = True):
+        """Load configuration values from a YAML file."""
+        if path is None or (not isinstance(path, str) and
+                            not isinstance(path, Path)):
+            raise ValueError("Invalid value for 'path'. Please provide a valid "
+                             "string or Path object.")
+        if isinstance(path, str):
+            path = Path(path)
 
-    with open(path) as tfile:
-        try:
-            config_values = yaml.load(tfile, Loader=LineInfoLoader)
-        except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-            raise HyperConfError(
-                f"Failed to load file {path}. Cause: {repr(e)}"
+        if not path.exists() or not path.is_file():
+            raise IOError(
+                f"Could not load the configuration from {path}. "
+                "Please check that the file exists."
             )
 
-    if "__line__" in config_values:
-        # The loader adds a __line__: 1 for the top level node.
-        del config_values["__line__"]
+        with open(path) as tfile:
+            try:
+                config_values = yaml.load(tfile, Loader=LineInfoLoader)
+            except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
+                raise err.HyperConfError(
+                    f"Failed to load file {path}. Cause: {repr(e)}"
+                )
+        return HyperConfig(config_values, strict, path)
 
+    def __init__(self, config_values: dict,
+                 strict: bool = True,
+                 fname: str = None):
+        """Parse and validate configuration objects."""
+        if config_values is None or not isinstance(config_values, dict):
+            raise ValueError("config_values must be a dict object.")
 
-class Config(UserDict):
-    """Provide configuration values.
+        if "__line__" in config_values:
+            # The loader adds a __line__: 1 for the top level node.
+            del config_values["__line__"]
 
-    A :class:`HyperConfig` instance is the result of parsing a dictionary
-    containing configuration options, typically obtained through loading a
-    YAML file by using the :func:`load_yaml` function.
-
-    *Accesssing values*
-    -------------------
-
-
-    Configuration values can be of primitive types or can be nested. The
-    configuration data can be acessed in two ways:
-
-    - using dictionary syntax, with string keys::
-
-        >> config = hyperconfig.config.load("test_config.yaml")
-        >> config["database"]["hostname"]
-
-    - using property syntax::
-
-        >> config = hyperconfig.config.load("test_config.yaml")
-        >> config.database.hostname
-
-    Since :class:`HyperConfig` is a :class:`UserDict``, instances of it
-    can be used like any Python dictionary. However, it is readonly, modifying
-    configuration values is forbidded.
-
-    *Templates, parsing and validation*
-    -----------------------------------
-
-    *hyperconf* is more than a simple YAML loader: it validates the
-    configuration structure and values against a *configuration template*. A
-    configuration template defines the required configuration nodes, the node
-    contents and the data format for configuration options,
-    see :mod:`hyperconf.templates` for details.
-
-    The node template is available for each :class:`HyperConfig` instance
-    through the *__meta__* property::
-
-        >> config = hyperconfig.config.load("test_config.yaml")
-        >> config.database.__meta__
-
-    When a :class:`HyperConfig` is initialized in *strict* mode, each
-    configuration object is required to have a template available and it is
-    validated agains it's definition.
-    """
-
-    def __init__(self, config, templates,
-                 definition=None, config_path=None, strict=True):
-        """Instance initalization.
-
-        :param config: map containing configuration keys and values.
-        :type config: dict
-        :param templates: object template definitions.
-        :type templates:  :class:`ObjectTemplates`
-        """
-        print(config)
-        self.data = {}
-
-        if "__line__" in config:
-            decl_line = config["__line__"]
-            del config["__line__"]
-        else:
-            decl_line = -1
-
-        if definition:
-            for opt in definition.get_args():
-                if opt.name not in config:
-                    # Required option is missing.
-                    raise HyperConfError(
-                        f"Missing required option '{opt.name}' for "
-                        f"configuration object '{definition.name}'.",
-                        decl_line,
-                        config_path
-                    )
-
-        for decl_name, decl in config.items():
-            print("--- ", decl)
-
-            if isinstance(decl, dict):
-                # Nested configuration object.
-                node_def = templates.get(decl_name, None)
-                if node_def:
-                    node_def.parse(decl)
-                else:
-                    if strict:
-                        raise UndefinedTagError(
-                            decl_name,
-                            decl_line,
-                            config_path
-                        )
-                try:
-                    nested_obj = Config(
-                        decl, templates, node_def,
-                        config_path, strict
-                    )
-                    nested_obj["__def__"] = node_def
-
-                    self.data[decl_name] = nested_obj
-                    setattr(self, decl_name, nested_obj)
-                except Exception as e:
-                    raise HyperConfError(
-                        f"Error while parsing node "
-                        f"'{decl_name}'. Cause: {e}"
-                    )
+        # Scan the entire file for use directives and
+        # load any object definitions before parsing objects.
+        objs = []
+        for decl_name, val in config_values.items():
+            if decl_name == dsl.Keywords.use:
+                dsl.ConfigDefs.parse_yaml(val, 0, fname)
             else:
-                try:
-                    arg_def = definition.get_arg(decl_name)
-                    arg_val = arg_def.type(decl)
-                    self.data[decl_name] = arg_val
-                    setattr(self, decl_name, arg_val)
-                except ValueError as e:
-                    raise HyperConfError(
-                        f"Error while parsing option {decl_name}."
-                        f"Cause: {e}", decl_line)
+                objs.append((decl_name, val))
 
-    def __setitem__(self, key, item):
-        """Not supported."""
-        raise NotImplementedError("HyperConfig is readonly.")
+        # Parse objects
+        for decl_name, val in objs:
+            line = val.get(dsl.Keywords.line, -1) if isinstance(val, dict) else -1
 
-    def __delitem__(self, key):
-        """Not supported."""
-        raise NotImplementedError("HyperConfig is readonly.")
+            ident, hdef = dsl.infer_type(decl_name)
+            if strict:
+                if hdef is None:
+                    raise err.UndefinedTagError(decl_name, line, fname)
+                hdef.validate(val)
+
+            if isinstance(val, dict):
+                self.update({ident: HyperConfig(val, strict, fname)})
+            else:
+                self.update({ident: val})
+
+    def __getattr__(self, attr: str):
+        """Return attribute value."""
+        if attr is None:
+            raise ValueError("attr is None")
+        if attr not in self:
+            raise AttributeError(attr)
+        return self[attr]
+
+    def __setitem__(self, k, v):
+        raise NotImplementedError("HyperConfig is read-only")
+
+    def __delitem__(self, v):
+        raise NotImplementedError("HyperConfig is read-only")
 
 
 if __name__ == "__main__":
-    hc = load_yaml("test_config.yaml", allow_undefined=False)
-    print(hc)
+    config = HyperConfig.load_yaml("test_config.yaml")

@@ -1,4 +1,5 @@
 """Defing the HyperConf template language."""
+import re
 import yaml
 import typing as t
 
@@ -10,6 +11,33 @@ except ImportError:
                       "Python versions <3.7 are not supported.")
 import hyperconf.errors as err
 from hyperconf.yaml import LineInfoLoader
+
+_id_synth = re.compile("^([_A-Za-z]+[_0-9A-Za-z]+)=?(.*)")
+
+
+def infer_type(decl_tag: str):
+    """Determine the definition for the given tag.
+
+    A declaration has the syntax
+     decl_name[=def_name]:
+      ...
+    If def_name is specified then the decl_name can be any valid
+    identifier, otherwise decl_name designates the definition to use,
+    e.g.:
+
+    database_config:
+     ...
+    database_config1=database_config:
+      ...
+    results in two distinct objects of the same type 'database_config'
+    but with different tags, 'database_config' and 'database_config1'
+    respectively.
+    """
+    if decl_tag is None:
+        raise ValueError("decl_tag is None")
+    parts = _id_synth.match(decl_tag).groups()
+    return (parts[0], ConfigDefs.get(parts[1]) if
+            parts[1] != "" else ConfigDefs.get(parts[0]))
 
 
 class Keywords:
@@ -26,43 +54,6 @@ class Keywords:
 
 class HyperDef:
     """Provide type attributes."""
-
-    def __init__(self, name,
-                 typename=None,
-                 line: int = -1,
-                 fpath: str = None,
-                 required: bool = False,
-                 validator: str = None,
-                 allow_multiple_values: bool = False,
-                 options: t.List = []):
-        """ Initialize a configuration object definition.
-
-        :param name:
-         the object name. Must start with a letter or '_' and
-         cannot contain whitespace and special characters.
-        :para typename:
-         the atomic type in case of single-option definitions.
-        :param required:
-         whether this is a mandatory configuration object or not.
-         Default: False.
-        :param file:
-         the path to the file containing this definition.
-        :param line:
-         the line at which the definition is specified.
-        """
-        self.name = name
-        self.typename = typename
-        self.requiredred = required
-        self.definition_file = fpath
-        self.line = line
-        self.validator = validator
-        self.options = options
-        self.allow_multiple_values = allow_multiple_values
-
-    def __repr__(self):
-        """Debug str representation."""
-        return f"{self.name} ({self.typename}) "\
-            f"opts: {[o.name for o in self.options]}"
 
     @staticmethod
     def parse(tname, tdef, fname):
@@ -110,6 +101,7 @@ class HyperDef:
                     line=def_line,
                     message="Invalid type definition. Unsupported "
                     f"YAML type '{_tdef.__class__}' for option definition.")
+
             if isinstance(aval, dict):
                 opt_line = def_line
                 if Keywords.line in aval:
@@ -141,6 +133,47 @@ class HyperDef:
                         validator=validator,
                         options=opts)
 
+    def __init__(self, name,
+                 typename=None,
+                 line: int = -1,
+                 fpath: str = None,
+                 required: bool = False,
+                 validator: str = None,
+                 allow_multiple_values: bool = False,
+                 options: t.List = []):
+        """ Initialize a configuration object definition.
+
+        :param name:
+         the object name. Must start with a letter or '_' and
+         cannot contain whitespace and special characters.
+        :para typename:
+         the atomic type in case of single-option definitions.
+        :param required:
+         whether this is a mandatory configuration object or not.
+         Default: False.
+        :param file:
+         the path to the file containing this definition.
+        :param line:
+         the line at which the definition is specified.
+        """
+        self.name = name
+        self.typename = typename
+        self.requiredred = required
+        self.definition_file = fpath
+        self.line = line
+        self.validator = validator
+        self.options = options
+        self.allow_multiple_values = allow_multiple_values
+
+    def __repr__(self):
+        """Debug str representation."""
+        return f"{self.name} ({self.typename}) "\
+            f"opts: {[o.name for o in self.options]}"
+
+    def validate(self, decl: dict):
+        """Validate the structure and values from declaration."""
+        pass
+
 
 class ConfigDefs:
     """Template definition parser and type registry."""
@@ -165,6 +198,13 @@ class ConfigDefs:
                     ConfigDefs._typedefs[hdef.name], hdef
                 )
             ConfigDefs._typedefs[hdef.name] = hdef
+
+    @staticmethod
+    def get(tag: str):
+        """Return the definition for the tag or None."""
+        if tag is None:
+            raise ValueError("tag is None")
+        return ConfigDefs._typedefs.get(tag, None)
 
     @staticmethod
     def contains(def_name: str):
