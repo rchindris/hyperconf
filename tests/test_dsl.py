@@ -3,13 +3,13 @@ import pytest
 
 import hyperconf.errors as err
 
-from hyperconf.dsl import parse_definitions, TypeRegistry
+from hyperconf.dsl import ConfigDefs
 from hyperconf.yaml import LineInfoLoader
 
 
 @pytest.fixture(autouse=True)
 def cleaup_before_test():
-    TypeRegistry.clear()
+    ConfigDefs.clear()
     yield
 
 
@@ -17,7 +17,7 @@ def test_parse_one():
     defs = """
     test_def: int
     """
-    assert parse_definitions(yaml.load(defs, LineInfoLoader))
+    assert ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
 
 
 def test_parse_multiple():
@@ -29,7 +29,7 @@ def test_parse_multiple():
       opt1: str
       opt2: str
     """
-    types = parse_definitions(yaml.load(defs, LineInfoLoader))
+    types = ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
     assert len(types) == 2
 
 
@@ -45,7 +45,7 @@ def test_fail_invalid_option_type():
         - validator: '<4'
     """
     with pytest.raises(err.TemplateDefinitionError):
-        parse_definitions(yaml.load(defs, LineInfoLoader))
+        ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
 
 
 def test_fail_when_nested():
@@ -56,7 +56,7 @@ def test_fail_when_nested():
        another_opt: str
     """
     with pytest.raises(err.TemplateDefinitionError, match=".*nesting.*not.*allowed.*"):
-        parse_definitions(yaml.load(defs, LineInfoLoader))
+        ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
 
 
 def test_reference_def():
@@ -68,7 +68,7 @@ def test_reference_def():
       opt1: int
       opt2: test_def
     """
-    parse_definitions(yaml.load(defs, LineInfoLoader))
+    ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
 
 
 def test_parse_invalid_use():
@@ -79,7 +79,7 @@ def test_parse_invalid_use():
     """
     with pytest.raises(err.TemplateDefinitionError,
                        match=".*must.*file.*path.*"):
-        parse_definitions(yaml.load(defs, LineInfoLoader))
+        ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
 
 
 def test_parse_use_not_found():
@@ -88,12 +88,12 @@ def test_parse_use_not_found():
     """
     with pytest.raises(err.TemplateDefinitionError,
                        match=".*Failed.*to.*load.*"):
-        parse_definitions(yaml.load(defs, LineInfoLoader))
+        ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
 
 
 def test_parse_valid_use():
     defs = """
     use: ./tests/defs
     """
-    parse_definitions(yaml.load(defs, LineInfoLoader))
-    assert TypeRegistry.contains("ref1")
+    ConfigDefs.parse_dict(yaml.load(defs, LineInfoLoader))
+    assert ConfigDefs.contains("ref1")
