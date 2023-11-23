@@ -3,6 +3,8 @@ import re
 import yaml
 import typing as t
 
+from yaml.loader import SafeLoader
+
 from pathlib import Path
 try:
     from importlib import resources
@@ -10,7 +12,17 @@ except ImportError:
     raise ImportError("Could not find module importlib.resources."
                       "Python versions <3.7 are not supported.")
 import hyperconf.errors as err
-from hyperconf.yaml import LineInfoLoader
+
+
+class _LineInfoLoader(SafeLoader):
+    """Adds line numbers to parsed yaml dicts."""
+
+    def construct_mapping(self, node, deep=False):
+        """Augument parsed nodes."""
+        mapping = super().construct_mapping(node, deep=deep)
+        mapping['__line__'] = node.start_mark.line + 1
+        return mapping
+
 
 _id_synth = re.compile("^([_A-Za-z]+[_0-9A-Za-z]+)=?(.*)")
 
@@ -29,7 +41,7 @@ def infer_type(decl_tag: str):
      ...
     database_config1=database_config:
       ...
-    results in two distinct objects of the same type 'database_config'
+    results in two distinct objects of the same type, 'database_config',
     but with different tags, 'database_config' and 'database_config1'
     respectively.
     """
@@ -84,10 +96,6 @@ class HyperDef:
         is_required = _tdef.get(Keywords.required, False)
         validator = _tdef.get(Keywords.validator, None)
 
-        if validator:
-            #TODO: make sure the validator exists.
-            pass
-
         for k in Keywords.HDef:
             if k in _tdef:
                 del _tdef[k]
@@ -116,7 +124,8 @@ class HyperDef:
                             line=opt_line,
                             message="Invalid option definition: "
                             f"found unexpected key '{akey}'. "
-                            "Please note that nesting definitions is not allowed.")
+                            "Please note that nesting definitions is "
+                            "not allowed.")
                 opts.append(HyperDef(
                     name=aname,
                     typename=aval.get(aval[Keywords.typename], str),
@@ -159,7 +168,7 @@ class HyperDef:
         self.name = name
         self.typename = typename
         self.requiredred = required
-        self.definition_file = fpath
+        self.def_file = fpath
         self.line = line
         self.validator = validator
         self.options = options
@@ -276,13 +285,13 @@ class ConfigDefs:
         return typedefs
 
     @staticmethod
-    def parse_yaml(template_path: str, line: int, ref_file: str):
-        """Load and parse referred template file.
+    def parse_yaml(template_path: str, line: int = 0, ref_file: str = None):
+        """Load definitions from path.
 
         :param template_path:
         the path to the template file. It can be an absolute path,
         a relative path to the current working directory or a
-        package resource (relative) path.
+        package resource.
         :param line:
         the line at which the use directive occurs.
         :param ref_file:
@@ -298,9 +307,9 @@ class ConfigDefs:
             # Search for a packaged resource
             # having the same name (predefined template).
             pkg_files = resources.files("hyperconf")
-            pkg_path = pkg_files / "templates" / template_path.name
+            template_path = pkg_files / template_path.name
 
-            if not pkg_path.exists():
+            if not template_path.exists():
                 raise err.TemplateDefinitionError(
                     name=Keywords.use,
                     message=f"Failed to load template '{template_path}'. "
@@ -311,7 +320,7 @@ class ConfigDefs:
         with open(template_path) as tfile:
             try:
                 return ConfigDefs.parse_dict(
-                    yaml.load(tfile, Loader=LineInfoLoader),
+                    yaml.load(tfile, Loader=_LineInfoLoader),
                     fname=template_path.as_posix()
                 )
             except yaml.scanner.ScannerError as e:
@@ -320,3 +329,17 @@ class ConfigDefs:
                     message=f"Invalid YAML file: {e}",
                     line=line,
                     config_path=ref_file)
+
+    @staticmethod
+    def parse_str(text: str):
+        """Parse YAML formatted string.
+
+        :param text:
+        the YAML to parse.
+        """
+        if text is None:
+            raise ValueError("text is None")
+
+        return ConfigDefs.parse_dict(
+            yaml.load(text, Loader=_LineInfoLoader)
+        )

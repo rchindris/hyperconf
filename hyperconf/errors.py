@@ -51,13 +51,14 @@ class DuplicateDefError(HyperConfError):
         :param existing_def: existing type definition.
         :param new_def: new definition with the same name.
         """
-        msg = f"Duplicated type definition for type name {new_def}."
-        if existing_def.file is not None:
-            msg += f" The type was already defined in {existing_def.file} at"
-            f" line {existing_def.line}"
+        msg = f"Duplicated type definition for type name {new_def}." +\
+            f"({new_def.def_file} : {new_def.line})"
+        if existing_def.def_file is not None:
+            msg += " The type was already defined in "
+            f"{existing_def.def_file} at line {existing_def.line}"
         else:
             msg += f" The type was already defined as '{existing_def}'."
-        super().__init__(msg, new_def.line, new_def.file)
+        super().__init__(msg, new_def.line, new_def.def_file)
 
 
 class UndefinedTagError(HyperConfError):

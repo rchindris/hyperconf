@@ -28,9 +28,10 @@ class OptionDef:
         - name (str): the option name, must be a valid identifier
           for the file format of the configuration file.
         - type (:class:`htype`): the data type of the option.
-        - required (bool): if True, this is a required option. Defaults to: False.
-        - default_value (str): the default value for this option, to be used when
-          *reqiured* is False.
+        - required (bool): if True, this is a required option.
+          Defaults to: False.
+        - default_value (str): the default value for this option,
+          to be used when *reqiured* is False.
 
     Example::
       # Common database configuration templates.
