@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hyperconf"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python configuration library and definition language."
 authors = ["Radu Chindris <radu.chindris@gmail.com>"]
 license = "MIT"
