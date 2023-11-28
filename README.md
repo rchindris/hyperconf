@@ -6,12 +6,13 @@
 
 ## Overview
 
-HyperConfig is a Python library for schema-based configuration. It allows you to define the structure of the configuraiton files
-using a YAML based definition files. It automatically parses and validates your configuration files, enabling:
+HyperConfig is a Python library for schema-based configuration. It allows you to decouple configuration definitions from values effortlessly, all without the need for any code.
+
+Advantages:
 
 - less code: define the structure in YAML, validate and load configs using a one-liner.
 - shared schemas: define once, use in multiple projects.
-- extensibility: add configuration types and validation rules without coding against and API.
+- extensibility: add configuration types and validation rules without coding.
 
 ## Installation
 
