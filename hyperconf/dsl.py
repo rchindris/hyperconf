@@ -148,8 +148,9 @@ class HyperDef:
         """Determine the definition for the given tag.
 
         A declaration has the syntax
-        decl_name[=def_name]:
-        ...
+        
+         decl_name[=def_name]: ...
+           
         If def_name is specified then the decl_name can be any valid
         identifier, otherwise decl_name designates the definition to use,
         e.g.:
@@ -294,7 +295,7 @@ class ConfigDefs:
         if not isinstance(hdefs, list):
             hdefs = [hdefs]
 
-        for hdef in hdefs:
+        for hdef in hdefs:            
             if hdef.name in ConfigDefs._typedefs:
                 raise err.DuplicateDefError(
                     ConfigDefs._typedefs[hdef.name], hdef
@@ -323,6 +324,7 @@ class ConfigDefs:
     def clear():
         """Remove all known type bindings."""
         ConfigDefs._typedefs.clear()
+        ConfigDefs._loaded_files.clear()
 
     @staticmethod
     def parse_dict(defs: t.Dict, fname: str = None):
@@ -378,6 +380,12 @@ class ConfigDefs:
         return typedefs
 
     @staticmethod
+    def load_builtins():
+        """Load built-in types."""
+        ConfigDefs.parse_yaml("builtins")
+
+    _loaded_files = []
+    @staticmethod
     def parse_yaml(template_path: str, line: int = 0, ref_file: str = None):
         """Load definitions from path.
 
@@ -410,18 +418,20 @@ class ConfigDefs:
                     line=line,
                     config_path=ref_file)
 
-        with open(template_path) as tfile:
-            try:
-                return ConfigDefs.parse_dict(
-                    yaml.load(tfile, Loader=_LineInfoLoader),
-                    fname=template_path.as_posix()
-                )
-            except yaml.scanner.ScannerError as e:
-                raise err.TemplateDefinitionError(
-                    name=Keywords.use,
-                    message=f"Invalid YAML file: {e}",
-                    line=line,
-                    config_path=ref_file)
+        if template_path not in ConfigDefs._loaded_files:
+            ConfigDefs._loaded_files.append(template_path)
+            with open(template_path) as tfile:
+                try:
+                    return ConfigDefs.parse_dict(
+                        yaml.load(tfile, Loader=_LineInfoLoader),
+                        fname=template_path.as_posix()
+                    )
+                except yaml.scanner.ScannerError as e:
+                    raise err.TemplateDefinitionError(
+                        name=Keywords.use,
+                        message=f"Invalid YAML file: {e}",
+                        line=line,
+                        config_path=ref_file)
 
     @staticmethod
     def parse_str(text: str):

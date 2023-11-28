@@ -16,8 +16,44 @@ class HyperConfig(dict):
     """
 
     @staticmethod
-    def load_yaml(path: str | Path, strict: bool = True):
-        """Load configuration values from a YAML file."""
+    def load_yaml(path: str | Path, strict: bool = True) -> "HyperConfig":
+        """Parse a YAML file containing configuration objects.
+
+        :param path: The path to the YAML file. It can be either a string or
+        a Path object.
+        :type path: Union[str, Path]
+
+        :param strict: If True, strict parsing is enforced. Defaults to True.
+        :type strict: bool, optional
+
+        :return: An instance of HyperConfig containing the parsed configuration
+        :rtype: HyperConfig
+
+        :raises FileNotFoundError: If the specified YAML file is not found.
+        :raises HyperConfigError: If there are issues with
+        parsing or validation.
+
+        :Example:
+
+        >>> config_path = 'path/to/config.yaml'
+        >>> config = HyperConfig.load_yaml(config_path)
+        >>> print(config.some_key)
+        'some_value'
+
+        :Example with non-strict parsing:
+
+        >>> config_path = 'path/to/config.yaml'
+        >>> config = HyperConfig.load_yaml(config_path, strict=False)
+        >>> print(config.some_key)
+        'some_value'
+
+        :note:
+            - If `strict` is set to True (default), the parser enforces strict
+             validation meaning that each object has to have a type so that the
+             object structure is validated.
+            - If `strict` is set to False, the parser allows objects with
+             undefined type and skips validation.
+        """
         if path is None or (not isinstance(path, str) and
                             not isinstance(path, Path)):
             raise ValueError("Invalid value for 'path'. Please provide a valid "
@@ -26,7 +62,7 @@ class HyperConfig(dict):
             path = Path(path)
 
         # Load built-in types.
-        dsl.ConfigDefs.parse_yaml("builtins.yaml")
+        dsl.ConfigDefs.load_builtins()
 
         if not path.exists() or not path.is_file():
             raise IOError(
@@ -48,12 +84,51 @@ class HyperConfig(dict):
 
     @staticmethod
     def load_str(text: str, strict: bool = True):
-        """Load configuraiton from string."""
+        """Parse a YAML-formatted string containing configuration objects.
+
+        :param text: The YAML-formatted string containing configuration data.
+        :type text: str
+
+        :param strict: If True, strict parsing is enforced. Defaults to True.
+        :type strict: bool, optional
+
+        :return: An instance of HyperConfig containing
+        the parsed configuration.
+        :rtype: HyperConfig
+
+        :raises HyperConfigError: If there are issues with
+        parsing or validation.
+
+        :Example:
+
+        >>> config_text = '''
+        ...     use: my_schema.yaml
+        ...     some_obj:
+        ...       some_opt: some_value
+        ...     '''
+        >>> config = HyperConfig.load_str(config_text)
+        >>> print(config.some_obj.some_opt)
+        'some_value'
+
+        :Example with non-strict parsing:
+
+        >>> config_text = 'some_key: some_value'
+        >>> config = HyperConfig.load_str(config_text, strict=False)
+        >>> print(config.some_key)
+        'some_value'
+
+        :note:
+            - If `strict` is set to True (default), the parser requires that
+              all objects are defined and raises an error for any validation
+              or parsing issues.
+            - If `strict` is set to False, the parser allows undefined objects
+              in which case they are treated as plain dictionaries.
+        """
         if text is None:
             raise ValueError("text is None")
 
         # Load built-in types.
-        dsl.ConfigDefs.parse_yaml("builtins.yaml")
+        dsl.ConfigDefs.load_builtins()
 
         try:
             config_values = yaml.load(text, Loader=dsl._LineInfoLoader)

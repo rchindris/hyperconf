@@ -80,3 +80,18 @@ def test_parse_complex_decl(valid_yaml_complex_defs):
     assert "model1" in config
     assert "head1" in config.model1.heads
     assert "head2" in config.model1.heads
+
+def test_ships():
+    defs = """
+    use: tests/ships
+
+    ncc1701=ship:
+      captain: James T. Kirk
+      crew: 156
+      class: galaxy
+      color: gray
+      shields: 1.0
+      engines: 900
+    """
+    config = HyperConfig.load_str(defs)
+    print(config.ncc1701.captain)

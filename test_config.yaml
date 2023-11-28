@@ -1,0 +1,11 @@
+use: config_defs
+
+model=slowfast:
+  stem: slowfast_4x
+  alpha: -4
+  heads:
+    - ava:
+        labels: ava_labels.pbtxt
+    - keba:
+        labels: keba_labels.csv
+        

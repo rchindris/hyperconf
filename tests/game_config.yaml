@@ -1,0 +1,9 @@
+use: ships
+
+ncc1701=ship:
+  captain: James T. Kirk
+  crew: 156
+  class: galaxy
+  color: magenta
+  shields: 1.0
+  engines: 900

@@ -1,0 +1,31 @@
+# Spaceship Configuration Schema
+
+ship_type:
+  _type: str
+  _validator: hval.isalpha()
+  _required: true
+
+ship_color:
+  _type: str
+  _validator: hval.lower() in ['red', 'blue', 'green', 'yellow', 'gray']
+  _required: true
+
+engine_power:
+  _type: int
+  _validator: 100 <= hval <= 1000
+  _required: true
+
+shield_level:
+  _type: float
+  _validator:  0.0 <= hval <= 1.0
+  _required: true
+
+ship:
+  captain: str
+  crew:
+   _type: int
+   _validator: hval > 0
+  class: ship_type
+  color: ship_color
+  shields: shield_level
+  engines: engine_power
