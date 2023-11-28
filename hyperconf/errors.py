@@ -118,10 +118,10 @@ class ConfigurationError(HyperConfError):
 
     def __init__(self, message,
                  line: int,
-                 config_path: str = None):
+                 fname: str = None):
         """Initialize an InvalidYamlError.
 
         Args:
         message (str): the error message.
         """
-        super().__init__(message, line, config_path)
+        super().__init__(message, line, fname)

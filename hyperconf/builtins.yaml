@@ -1,0 +1,19 @@
+# Built-in type definitions
+str:
+  _validator: |
+    isinstance(hval, str)
+
+int:
+  _validator: |
+    int(hval)
+
+pos_int:
+  _validator: |
+    int(hval) and hval>0
+
+float:
+  _validator: |
+    float(hval)
+
+
+  

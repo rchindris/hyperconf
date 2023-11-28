@@ -27,54 +27,55 @@ class _LineInfoLoader(SafeLoader):
 _id_synth = re.compile("^([_A-Za-z]+[_0-9A-Za-z]+)=?(.*)")
 
 
-def infer_type(decl_tag: str):
-    """Determine the definition for the given tag.
-
-    A declaration has the syntax
-     decl_name[=def_name]:
-      ...
-    If def_name is specified then the decl_name can be any valid
-    identifier, otherwise decl_name designates the definition to use,
-    e.g.:
-
-    database_config:
-     ...
-    database_config1=database_config:
-      ...
-    results in two distinct objects of the same type, 'database_config',
-    but with different tags, 'database_config' and 'database_config1'
-    respectively.
-    """
-    if decl_tag is None:
-        raise ValueError("decl_tag is None")
-    parts = _id_synth.match(decl_tag).groups()
-    return (parts[0], ConfigDefs.get(parts[1]) if
-            parts[1] != "" else ConfigDefs.get(parts[0]))
-
-
 class Keywords:
     """Define reserved keys."""
 
     validator = "_validator"
     typename = "_type"
     required = "_required"
-    allow_multiple = "_allow_multiple"
+    allow_multiple = "_many"
     line = "__line__"
     use = "use"
-    HDef = [validator, typename, required]
+    HDef = [validator, typename, required, allow_multiple]
 
 
 class HyperDef:
     """Provide type attributes."""
 
     @staticmethod
-    def parse(tname, tdef, fname):
-        """Parse a multi-option configuration object definition.
+    def parse(tname: str, tdef: dict, fname: str = None):
+        """Parse a configuration object definition.
 
-        :param tname:
-          type name
-        :param tdef:
-          type definition, must be a dict
+        :param tname: The name of the configuration object type.
+        :type tname: str
+        :param tdef: The dictionary specifying the configuration object definition.
+        :type tdef: dict
+        :param fname: The file name used for error reporting.
+        :type fname: str
+
+        :raises ValueError: If preconditions are not met.
+
+        This method parses a definition named `tname`, specified as a dictionary
+        using `tdef`. It checks if the dictionary contains the key
+        :class:`Keywords.typename` and infers that the configuration object type
+        name is the found value if it exists, or the specified argument `tname`
+        if not. It also checks that :class:`Keywords.required` and
+        :class:`Keywords.validator` exist and t
+        The method then treats the rest of the dictionary keys as option specifiers.
+        Each option must be of a previously defined type.
+        Nesting definitions is not allowed.
+        
+        Example(s):
+        >>> hyper_def.parse('nat', {
+        ...     'validator': "hval >= 0"
+        ... })
+        >>> hyper_def.parse('mongo_db', {
+        ...     "hostname": {
+        ...         "_typename": "str",
+        ...         "_required": True,
+        ...     }
+        ...     ...
+        ... })
         """
         if tname is None:
             raise ValueError("tname is None")
@@ -128,7 +129,7 @@ class HyperDef:
                             "not allowed.")
                 opts.append(HyperDef(
                     name=aname,
-                    typename=aval.get(aval[Keywords.typename], str),
+                    typename=aval.get(Keywords.typename, str),
                     required=aval.get(Keywords.required, True),
                     validator=aval.get(Keywords.validator, None),
                     line=opt_line,
@@ -141,6 +142,50 @@ class HyperDef:
                         required=is_required,
                         validator=validator,
                         options=opts)
+
+    @staticmethod
+    def infer_type(decl_tag: str, decl: str = None, hdef = None):
+        """Determine the definition for the given tag.
+
+        A declaration has the syntax
+        decl_name[=def_name]:
+        ...
+        If def_name is specified then the decl_name can be any valid
+        identifier, otherwise decl_name designates the definition to use,
+        e.g.:
+
+        database_config:
+        ...
+        database_config1=database_config:
+        ...
+        results in two distinct objects of the same type, 'database_config',
+        but with different tags, 'database_config' and 'database_config1'
+        respectively.
+
+        :param decl_tag:
+        the object or option name.
+        :param decl:
+        the value of the option or object.
+        :param hdef:
+        the object definition or parent definition in case of an option.
+        """
+        if decl_tag is None:
+            raise ValueError("decl_tag is None")
+
+        # Try to determine type from the tag.
+        ident, htype = _id_synth.match(decl_tag).groups()
+        if not htype and ConfigDefs.contains(ident):
+            htype = ident
+
+        if not htype:
+            # Failed to determine type from name/tag.
+            # Search the definition of the enclosing decl
+            # for an option with that name.
+            opt = [o for o in hdef.options if o.name == ident]
+            if opt:
+                htype = opt[0].typename
+
+        return ident, ConfigDefs.get(htype) if htype else None
 
     def __init__(self, name,
                  typename=None,
@@ -170,19 +215,63 @@ class HyperDef:
         self.requiredred = required
         self.def_file = fpath
         self.line = line
-        self.validator = validator
+        self._validator = validator
         self.options = options
         self.allow_multiple_values = allow_multiple_values
 
     def __repr__(self):
         """Debug str representation."""
         return f"{self.name} ({self.typename}) "\
-            f"opts: {[o.name for o in self.options]}"
+            f"{[o.name for o in self.options]}"
 
-    def validate(self, decl: dict):
+    def validate(self, decl: dict, line: int=0, filename: str = None):
         """Validate the structure and values from declaration."""
-        pass
+        if not self._validator:
+            return True
 
+        # validate structure
+        if type(decl) is dict:
+            decl_opts = list(decl.keys())
+            
+            # any required opt not specified => error
+            for opt in self.options:
+                if not opt in decl_opts:
+                    raise err.ConfigurationError(
+                        f"Missing required option {opt}",
+                        line=decl.line, fname=filename
+                    )
+                decl_opts.remove(opt)
+
+            # check if remaining are valid opt names
+            if any([opt not in self.options
+                    for opt in decl_opts]):
+                opt_names = [o for o in decl_opts
+                             if not o in self.options]
+                raise err.ConfigurationError(
+                    f"Unkown options {opt_names} for definition {self}.",
+                    line=line,
+                    filename=filename
+                )
+
+        is_valid = True
+        err_msg = None
+        try:
+            is_valid = eval(self._validator, {
+                    "htype": self,
+                    "hval": decl
+            })
+        except Exception as e:
+            err_msg = e
+
+        if not is_valid:
+            raise err.ConfigurationError(
+                f"Invalid configuration value '{decl}' "
+                f"for type {self} "
+                f"{':' + (str(err_msg) if err_msg else '')}",
+                line=line,
+                fname=filename
+            )
+            
 
 class ConfigDefs:
     """Template definition parser and type registry."""
