@@ -1,14 +1,13 @@
 [tool.poetry]
 name = "hyperconf"
 version = "0.1.0"
-description = "A Python configuration library and mini-DSL aimed primarily at configuring ML experiments."
-authors = ["Radu Chindrix <radu.chindris@gmail.com>"]
+description = "A Python configuration library and definition language."
+authors = ["Radu Chindris <radu.chindris@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.10"
 PyYAML = "^6.0"
-debugpy = "^1.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
