@@ -41,7 +41,6 @@ class HyperConfig(dict):
                 raise err.HyperConfError(
                     f"Failed to load file {path}. Cause: {repr(e)}"
                 )
-        print("FIE ", path)
         return HyperConfig(path.stem, config_values,
                            strict=strict,
                            line=0,
@@ -62,7 +61,9 @@ class HyperConfig(dict):
             raise err.HyperConfError(
                 f"Failed to parse YAML. Cause: {repr(e)}"
             )
-        return HyperConfig(None, config_values, strict, None)
+        return HyperConfig(None, config_values,
+                           strict=strict,
+                           fname=None)
 
     def __init__(self, ident: str,
                  config_values: dict,
@@ -84,9 +85,8 @@ class HyperConfig(dict):
         self.name = ident
         self._strict = strict
         self._file = fname
-        self._htype = hdef
+        self.__def__ = hdef
 
-        print("FILE ", self._file)
         # Scan the entire file for use directives and
         # load referred definitions.
         objs = []
@@ -146,7 +146,7 @@ class HyperConfig(dict):
         if attr not in self:
             raise AttributeError(
                 f"Invalid configuration key '{attr}' for "
-                f"configuraiton object {self._htype}"
+                f"configuraiton object {self.__def__}"
             )
         return self[attr]
 
@@ -157,4 +157,3 @@ class HyperConfig(dict):
 
 if __name__ == "__main__":
     config = HyperConfig.load_yaml("test_config.yaml")
-    

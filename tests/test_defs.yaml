@@ -1,0 +1,21 @@
+# Configuraiton object definitions used by unit tests.
+
+int_gt3:
+  _type: int
+  _validator: |
+    value > 3
+
+head:
+  name: str
+  labels:
+    _type: str
+
+detector:
+  stem: str
+  heads:
+    _type: head
+    _allow_many: True
+
+train:
+  num_epoch: int
+  learning_rate: float

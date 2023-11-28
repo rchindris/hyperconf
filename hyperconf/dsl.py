@@ -33,7 +33,7 @@ class Keywords:
     validator = "_validator"
     typename = "_type"
     required = "_required"
-    allow_multiple = "_many"
+    allow_multiple = "_allow_many"
     line = "__line__"
     use = "use"
     HDef = [validator, typename, required, allow_multiple]
@@ -177,7 +177,7 @@ class HyperDef:
         if not htype and ConfigDefs.contains(ident):
             htype = ident
 
-        if not htype:
+        if not htype and hdef:
             # Failed to determine type from name/tag.
             # Search the definition of the enclosing decl
             # for an option with that name.
@@ -185,6 +185,10 @@ class HyperDef:
             if opt:
                 htype = opt[0].typename
 
+        if not htype:
+            # Default to the actual datatype.
+            htype = decl.__class__.__name__
+            
         return ident, ConfigDefs.get(htype) if htype else None
 
     def __init__(self, name,
