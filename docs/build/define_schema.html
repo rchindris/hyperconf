@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuration Schema Definition &mdash; HyperConf 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Documentation" href="api_docs.html" />
+    <link rel="prev" title="Quick Start" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            HyperConf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="documentation.html">Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Configuration Schema Definition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-use-directive">The <cite>use</cite> directive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-an-object">Defining an Object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validating-and-converting-values">Validating and Converting Values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#builtin-types">Builtin Types</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_docs.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HyperConf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="documentation.html">Documentation</a></li>
+      <li class="breadcrumb-item active">Configuration Schema Definition</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/define_schema.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuration-schema-definition">
+<h1>Configuration Schema Definition<a class="headerlink" href="#configuration-schema-definition" title="Permalink to this heading"></a></h1>
+<p>By defining a configuration object schema, you gain control over the structure of those configuration objects. This involves specifying the options and their types, along with setting value validation rules and string-to-value conversion.</p>
+<section id="the-use-directive">
+<h2>The <cite>use</cite> directive<a class="headerlink" href="#the-use-directive" title="Permalink to this heading"></a></h2>
+<p>Schemas need to be defined separately of configuration files and be included in the configuration
+file using an <cite>use</cite> directive. This encourages the reuse of configuration definition files.
+<cite>use</cite> directives can appear anywhere at the top level in the configuration or schema definition files.</p>
+<p>The correct form of an <cite>use</cite> directive is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">use</span><span class="p">:</span> <span class="n">file_path</span>
+</pre></div>
+</div>
+<p>where <cite>file_path</cite> is the relative or absolute path of a schema YAML file. The extension can be
+ommited in which case the ‘.yaml’ suffix is appended automatically.</p>
+</section>
+<section id="defining-an-object">
+<h2>Defining an Object<a class="headerlink" href="#defining-an-object" title="Permalink to this heading"></a></h2>
+<p>In a configuration schema, any top-level YAML node, excluding the use node, is considered to define an object type. The YAML key serves as the type name, and the node contents are interpreted as follows:</p>
+<blockquote>
+<div><ul>
+<li><p>If the node is of type string, the node value specifies the type name of this object and needs to be previously defined. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
+<span class="n">threshold</span><span class="p">:</span> <span class="n">percent</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p>If the node is of type dictionary, it is treated as a complex type definition. Complex type definitions can include:</p>
+<ul class="simple">
+<li><p><cite>typename</cite>: Specifies the name of the type.</p></li>
+<li><p><cite>required</cite>: A boolean flag indicating whether instances of this type are required or not.</p></li>
+<li><p><cite>validator</cite>: A valid Python expression that checks values of this type.</p></li>
+<li><p><cite>converter</cite>: A valid Python expression that converts strings to type values.</p></li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+<p>In addition to the above, any other property specified is regarded as an option definition. An option definition node cannot contain keys other than those mentioned above; in other words, nesting type definitions is forbidden.</p>
+<p>The following example is an incorrectly defined object type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">incorrect_def</span><span class="p">:</span>
+  <span class="n">valid_option</span><span class="p">:</span> <span class="nb">str</span>
+  <span class="n">another_valid_option</span><span class="p">:</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">validator</span><span class="p">:</span> <span class="s1">&#39;int(hval) &gt; 3&#39;</span>
+  <span class="n">invalid_option</span><span class="p">:</span>
+    <span class="n">nested_opt</span><span class="p">:</span> <span class="nb">int</span>
+</pre></div>
+</div>
+<p>In this case the <cite>invalid_option</cite> option attempts to nest another type definition. The correct way of doing this is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">was_nested</span><span class="p">:</span> <span class="nb">str</span>
+<span class="n">correct_def</span><span class="p">:</span>
+ <span class="n">valid_option</span><span class="p">:</span> <span class="nb">str</span>
+ <span class="n">another_valid_option</span><span class="p">:</span>
+   <span class="nb">type</span><span class="p">:</span> <span class="nb">int</span>
+   <span class="n">validator</span><span class="p">:</span> <span class="s1">&#39;int(hval) &gt; 3&#39;</span>
+ <span class="n">now_valid_option</span><span class="p">:</span> <span class="n">was_nested</span>
+</pre></div>
+</div>
+</section>
+<section id="validating-and-converting-values">
+<h2>Validating and Converting Values<a class="headerlink" href="#validating-and-converting-values" title="Permalink to this heading"></a></h2>
+<p><cite>HyperConf</cite> definitions can specify validation and value conversion rules. A validation rule must be a valid Python expression that results in either a boolean value or a tuple containing a boolean value and a string. In the latter case, the string represents the error message to be reported back to the user if the validation fails.</p>
+<p>The validation expression can utilize the following references:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>hval</cite>: the value found in the configuration file, as a string.</p></li>
+<li><p><cite>htype</cite>: the configuration type of the declaration.</p></li>
+</ul>
+</div></blockquote>
+<p>In addition to these references, the code can make use of the modules <cite>re</cite>, <cite>math</cite> and <cite>pathlib</cite>.
+For converter expressions, the expression converts a string value to the respective type. The same conditions apply during evaluation as for validator expressions.</p>
+</section>
+<section id="builtin-types">
+<h2>Builtin Types<a class="headerlink" href="#builtin-types" title="Permalink to this heading"></a></h2>
+<p>Schema definition and configuration declaration files can access the following predefined configuration types:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>str: alias for a string value.</p></li>
+<li><p>int: validates and converts integer values.</p></li>
+<li><p>pos_int: validates and converts positive integers.</p></li>
+<li><p>float: validates and converts real numbers.</p></li>
+<li><p>percent: validates and converts float values between 0 and 1.</p></li>
+<li><p>path: alias for string values that point to a file or directory.</p></li>
+</ul>
+</div></blockquote>
+<p>(more to come)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_docs.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Radu Chindris.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

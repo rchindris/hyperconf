@@ -1,8 +1,9 @@
 [tool.poetry]
 name = "hyperconf"
-version = "0.2.0"
-description = "A Python configuration library and definition language."
+version = "0.2.1"
+description = "YAML-based configuration library, featuring zero-code validation and parsing."
 authors = ["Radu Chindris <radu.chindris@gmail.com>"]
+readme = "README.md"
 license = "MIT"
 
 [tool.poetry.dependencies]

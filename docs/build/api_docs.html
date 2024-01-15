@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Documentation &mdash; HyperConf 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Configuration Schema Definition" href="define_schema.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            HyperConf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hyperconf.config.HyperConfig"><code class="docutils literal notranslate"><span class="pre">HyperConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.config.HyperConfig.load_str"><code class="docutils literal notranslate"><span class="pre">HyperConfig.load_str()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.config.HyperConfig.load_yaml"><code class="docutils literal notranslate"><span class="pre">HyperConfig.load_yaml()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs"><code class="docutils literal notranslate"><span class="pre">ConfigDefs</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.add"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.add()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.clear"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.contains"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.contains()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.get"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.load_builtins"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.load_builtins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.parse_dict"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.parse_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.parse_str"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.parse_str()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.ConfigDefs.parse_yaml"><code class="docutils literal notranslate"><span class="pre">ConfigDefs.parse_yaml()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hyperconf.dsl.HyperDef"><code class="docutils literal notranslate"><span class="pre">HyperDef</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.HyperDef.convert"><code class="docutils literal notranslate"><span class="pre">HyperDef.convert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.HyperDef.infer_type"><code class="docutils literal notranslate"><span class="pre">HyperDef.infer_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.HyperDef.parse"><code class="docutils literal notranslate"><span class="pre">HyperDef.parse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.HyperDef.validate"><code class="docutils literal notranslate"><span class="pre">HyperDef.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hyperconf.dsl.Keywords"><code class="docutils literal notranslate"><span class="pre">Keywords</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.HDef"><code class="docutils literal notranslate"><span class="pre">Keywords.HDef</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.allow_multiple"><code class="docutils literal notranslate"><span class="pre">Keywords.allow_multiple</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.converter"><code class="docutils literal notranslate"><span class="pre">Keywords.converter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.line"><code class="docutils literal notranslate"><span class="pre">Keywords.line</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.required"><code class="docutils literal notranslate"><span class="pre">Keywords.required</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.typename"><code class="docutils literal notranslate"><span class="pre">Keywords.typename</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.use"><code class="docutils literal notranslate"><span class="pre">Keywords.use</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hyperconf.dsl.Keywords.validator"><code class="docutils literal notranslate"><span class="pre">Keywords.validator</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HyperConf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api_docs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hyperconf.config">
+<span id="api-documentation"></span><h1>API Documentation<a class="headerlink" href="#module-hyperconf.config" title="Permalink to this heading"></a></h1>
+<p>Load and access configuration data.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hyperconf.config.HyperConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hyperconf.config.</span></span><span class="sig-name descname"><span class="pre">HyperConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ident</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdef</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hyperconf.dsl.HyperDef" title="hyperconf.dsl.HyperDef"><span class="pre">HyperDef</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.config.HyperConfig" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<p>Configuration file parser.</p>
+<p>This class provides schema validation by using configuration template
+definitions and configuration value validation.
+Accessing values can be done in a dict-like manner on by acessing
+attributes. All top-level configuration keys are exposed as attributes.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.config.HyperConfig.load_str">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.config.HyperConfig.load_str" title="Permalink to this definition"></a></dt>
+<dd><p>Parse a YAML-formatted string containing configuration objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – The YAML-formatted string containing configuration data.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, strict parsing is enforced. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of HyperConfig containing</p>
+</dd>
+</dl>
+<p>the parsed configuration.
+:rtype: HyperConfig</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>HyperConfigError</strong> – If there are issues with</p>
+</dd>
+</dl>
+<p>parsing or validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config_text</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="gp">... </span><span class="s1">    use: my_schema.yaml</span>
+<span class="gp">... </span><span class="s1">    some_obj:</span>
+<span class="gp">... </span><span class="s1">      some_opt: some_value</span>
+<span class="gp">... </span><span class="s1">    &#39;&#39;&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">HyperConfig</span><span class="o">.</span><span class="n">load_str</span><span class="p">(</span><span class="n">config_text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">some_obj</span><span class="o">.</span><span class="n">some_opt</span><span class="p">)</span>
+<span class="go">&#39;some_value&#39;</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Example with non-strict parsing<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config_text</span> <span class="o">=</span> <span class="s1">&#39;some_key: some_value&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">HyperConfig</span><span class="o">.</span><span class="n">load_str</span><span class="p">(</span><span class="n">config_text</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">some_key</span><span class="p">)</span>
+<span class="go">&#39;some_value&#39;</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>If <cite>strict</cite> is set to True (default), the parser requires that
+all objects are defined and raises an error for any validation
+or parsing issues.</p></li>
+<li><p>If <cite>strict</cite> is set to False, the parser allows undefined objects
+in which case they are treated as plain dictionaries.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.config.HyperConfig.load_yaml">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_yaml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hyperconf.config.HyperConfig" title="hyperconf.config.HyperConfig"><span class="pre">HyperConfig</span></a></span></span><a class="headerlink" href="#hyperconf.config.HyperConfig.load_yaml" title="Permalink to this definition"></a></dt>
+<dd><p>Parse a YAML file containing configuration objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> – The path to the YAML file. It can be either a string or</p>
+</dd>
+</dl>
+<p>a Path object.
+:type path: Union[str, Path]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>strict</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, strict parsing is enforced. Defaults to True.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of HyperConfig containing the parsed configuration</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#hyperconf.config.HyperConfig" title="hyperconf.config.HyperConfig">HyperConfig</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If the specified YAML file is not found.</p></li>
+<li><p><strong>HyperConfigError</strong> – If there are issues with</p></li>
+</ul>
+</dd>
+</dl>
+<p>parsing or validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config_path</span> <span class="o">=</span> <span class="s1">&#39;path/to/config.yaml&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">HyperConfig</span><span class="o">.</span><span class="n">load_yaml</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">some_key</span><span class="p">)</span>
+<span class="go">&#39;some_value&#39;</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Example with non-strict parsing<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config_path</span> <span class="o">=</span> <span class="s1">&#39;path/to/config.yaml&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">HyperConfig</span><span class="o">.</span><span class="n">load_yaml</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">some_key</span><span class="p">)</span>
+<span class="go">&#39;some_value&#39;</span>
+</pre></div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Note<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>If <cite>strict</cite> is set to True (default), the parser enforces strict</p></li>
+</ul>
+<blockquote>
+<div><p>validation meaning that each object has to have a type so that the
+object structure is validated.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>If <cite>strict</cite> is set to False, the parser allows objects with</p></li>
+</ul>
+<blockquote>
+<div><p>undefined type and skips validation.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-hyperconf.dsl"></span><p>Defing the HyperConf template language.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hyperconf.dsl.</span></span><span class="sig-name descname"><span class="pre">ConfigDefs</span></span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Template definition parser and type registry.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.add">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hdefs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.add" title="Permalink to this definition"></a></dt>
+<dd><p>Register a definition or list of definitions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hdefs</strong> – definition or a collection of definitions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.clear">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.clear" title="Permalink to this definition"></a></dt>
+<dd><p>Remove all known type bindings.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.contains">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">def_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.contains" title="Permalink to this definition"></a></dt>
+<dd><p>Check if the name is defined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>def_name</strong> – the object definition name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.get">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.get" title="Permalink to this definition"></a></dt>
+<dd><p>Return the definition for the tag or None.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.load_builtins">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_builtins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.load_builtins" title="Permalink to this definition"></a></dt>
+<dd><p>Load built-in types.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.parse_dict">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">defs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.parse_dict" title="Permalink to this definition"></a></dt>
+<dd><p>Parse type definitions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>defs</strong> – a dictionary containing type structure</p>
+</dd>
+</dl>
+<p>information (as nested dictionaries).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a list of :class:TypeDef definitions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.parse_str">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.parse_str" title="Permalink to this definition"></a></dt>
+<dd><p>Parse YAML formatted string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> – </p>
+</dd>
+</dl>
+<p>the YAML to parse.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.ConfigDefs.parse_yaml">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_yaml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.ConfigDefs.parse_yaml" title="Permalink to this definition"></a></dt>
+<dd><p>Load definitions from path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>template_path</strong> – </p>
+</dd>
+</dl>
+<p>the path to the template file. It can be an absolute path,
+a relative path to the current working directory or a
+package resource.
+:param line:
+the line at which the use directive occurs.
+:param ref_file:
+the file that contains the use directive.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hyperconf.dsl.HyperDef">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hyperconf.dsl.</span></span><span class="sig-name descname"><span class="pre">HyperDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_multiple_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.HyperDef" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provide type attributes.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.HyperDef.convert">
+<span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.HyperDef.convert" title="Permalink to this definition"></a></dt>
+<dd><p>Convert option value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.HyperDef.infer_type">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">infer_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decl_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdef</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.HyperDef.infer_type" title="Permalink to this definition"></a></dt>
+<dd><p>Determine the definition for the given tag.</p>
+<p>A declaration has the syntax</p>
+<blockquote>
+<div><p>decl_name[=def_name]: …</p>
+</div></blockquote>
+<p>If def_name is specified then the decl_name can be any valid
+identifier, otherwise decl_name designates the definition to use,
+e.g.:</p>
+<p>database_config:
+…
+database_config1=database_config:
+…
+results in two distinct objects of the same type, ‘database_config’,
+but with different tags, ‘database_config’ and ‘database_config1’
+respectively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>decl_tag</strong> – </p>
+</dd>
+</dl>
+<p>the object or option name.
+:param decl:
+the value of the option or object.
+:param hdef:
+the object definition or parent definition in case of an option.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.HyperDef.parse">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tdef</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.HyperDef.parse" title="Permalink to this definition"></a></dt>
+<dd><p>Parse a configuration object definition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tname</strong> (<em>str</em>) – The name of the configuration object type.</p></li>
+<li><p><strong>tdef</strong> (<em>dict</em>) – The dictionary specifying the configuration object definition.</p></li>
+<li><p><strong>fname</strong> (<em>str</em>) – The file name used for error reporting.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If preconditions are not met.</p>
+</dd>
+</dl>
+<p>This method parses a definition named <cite>tname</cite>, specified as a dictionary
+using <cite>tdef</cite>. It checks if the dictionary contains the key
+<a class="reference internal" href="#hyperconf.dsl.Keywords.typename" title="hyperconf.dsl.Keywords.typename"><code class="xref py py-class docutils literal notranslate"><span class="pre">Keywords.typename</span></code></a> and infers that the configuration object type
+name is the found value if it exists, or the specified argument <cite>tname</cite>
+if not. It also checks that <a class="reference internal" href="#hyperconf.dsl.Keywords.required" title="hyperconf.dsl.Keywords.required"><code class="xref py py-class docutils literal notranslate"><span class="pre">Keywords.required</span></code></a> and
+<a class="reference internal" href="#hyperconf.dsl.Keywords.validator" title="hyperconf.dsl.Keywords.validator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Keywords.validator</span></code></a> exist and t
+The method then treats the rest of the dictionary keys as option specifiers.
+Each option must be of a previously defined type.
+Nesting definitions is not allowed.</p>
+<p>Example(s):
+&gt;&gt;&gt; hyper_def.parse(‘nat’, {
+…     ‘validator’: “hval &gt;= 0”
+… })
+&gt;&gt;&gt; hyper_def.parse(‘mongo_db’, {
+…     “hostname”: {
+…         “_typename”: “str”,
+…         “_required”: True,
+…     }
+…     …
+… })</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hyperconf.dsl.HyperDef.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hyperconf.dsl.HyperDef.validate" title="Permalink to this definition"></a></dt>
+<dd><p>Validate the structure and values from declaration.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hyperconf.dsl.</span></span><span class="sig-name descname"><span class="pre">Keywords</span></span><a class="headerlink" href="#hyperconf.dsl.Keywords" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Define reserved keys.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.HDef">
+<span class="sig-name descname"><span class="pre">HDef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['validator',</span> <span class="pre">'converter',</span> <span class="pre">'type',</span> <span class="pre">'required',</span> <span class="pre">'allow_many']</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.HDef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.allow_multiple">
+<span class="sig-name descname"><span class="pre">allow_multiple</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'allow_many'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.allow_multiple" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.converter">
+<span class="sig-name descname"><span class="pre">converter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'converter'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.converter" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.line">
+<span class="sig-name descname"><span class="pre">line</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'__line__'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.line" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.required">
+<span class="sig-name descname"><span class="pre">required</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'required'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.required" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.typename">
+<span class="sig-name descname"><span class="pre">typename</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'type'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.typename" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.use">
+<span class="sig-name descname"><span class="pre">use</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'use'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.use" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hyperconf.dsl.Keywords.validator">
+<span class="sig-name descname"><span class="pre">validator</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'validator'</span></em><a class="headerlink" href="#hyperconf.dsl.Keywords.validator" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="define_schema.html" class="btn btn-neutral float-left" title="Configuration Schema Definition" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Radu Chindris.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
