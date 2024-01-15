@@ -84,6 +84,8 @@ and load it:
 >>> print(config.ncc1701.captain)
 ```
 
+Please check the documentation at https://hyperconf.readthedocs.io/en/latest/index.html
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
