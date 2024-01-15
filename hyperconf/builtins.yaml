@@ -1,19 +1,37 @@
 # Built-in type definitions
 str:
-  _validator: |
+  validator: |
     isinstance(hval, str)
 
 int:
-  _validator: |
+  validator: |
+    int(hval)
+  
+pos_int:
+  validator: |
+      int(hval) > 0, "Not a positive integer"
+  converter: |
     int(hval)
 
-pos_int:
-  _validator: |
-    int(hval) and hval>0
-
 float:
-  _validator: |
+  validator: |
+    float(hval)
+  converter: |
     float(hval)
 
+percent:
+  validator: |
+    0 <= float(hval) <= 1, "Expecting a float value from the [0,1] interval."
+  converter: |
+    float(hval)
+
+path:
+  _type: str
+
+dir:
+  validator: |
+    pathlib.Path(hval).is_dir(), "Not a directory"
+  converter: |
+    pathlib.Path(hval)
 
   

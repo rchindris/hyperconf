@@ -1,6 +1,7 @@
 """Defing the HyperConf template language."""
 import re
 import yaml
+import importlib
 import typing as t
 
 from yaml.loader import SafeLoader
@@ -26,17 +27,24 @@ class _LineInfoLoader(SafeLoader):
 
 _id_synth = re.compile("^([_A-Za-z]+[_0-9A-Za-z]+)=?(.*)")
 
+_module_names = ["re", "math", "pathlib"]
+_eval_imports = {
+    mod_name: importlib.import_module(mod_name)
+    for mod_name in _module_names
+}
+
 
 class Keywords:
     """Define reserved keys."""
 
-    validator = "_validator"
-    typename = "_type"
-    required = "_required"
-    allow_multiple = "_allow_many"
+    validator = "validator"
+    converter = "converter"
+    typename = "type"
+    required = "required"
+    allow_multiple = "allow_many"
     line = "__line__"
     use = "use"
-    HDef = [validator, typename, required, allow_multiple]
+    HDef = [validator, converter, typename, required, allow_multiple]
 
 
 class HyperDef:
@@ -96,6 +104,7 @@ class HyperDef:
         type_name = _tdef.get(Keywords.typename, tname)
         is_required = _tdef.get(Keywords.required, False)
         validator = _tdef.get(Keywords.validator, None)
+        converter = _tdef.get(Keywords.converter, None)
 
         for k in Keywords.HDef:
             if k in _tdef:
@@ -132,6 +141,7 @@ class HyperDef:
                     typename=aval.get(Keywords.typename, str),
                     required=aval.get(Keywords.required, True),
                     validator=aval.get(Keywords.validator, None),
+                    converter=aval.get(Keywords.converter, None),
                     line=opt_line,
                     fpath=fname))
             else:
@@ -141,6 +151,7 @@ class HyperDef:
                         typename=type_name,
                         required=is_required,
                         validator=validator,
+                        converter=converter,
                         options=opts)
 
     @staticmethod
@@ -198,6 +209,7 @@ class HyperDef:
                  fpath: str = None,
                  required: bool = False,
                  validator: str = None,
+                 converter: str = None,
                  allow_multiple_values: bool = False,
                  options: t.List = []):
         """ Initialize a configuration object definition.
@@ -221,13 +233,14 @@ class HyperDef:
         self.def_file = fpath
         self.line = line
         self._validator = validator
+        self._converter = converter
         self.options = options
         self.allow_multiple_values = allow_multiple_values
 
     def __repr__(self):
         """Debug str representation."""
-        return f"{self.name} ({self.typename}) "\
-            f"{[o.name for o in self.options]}"
+        return f"({self.name} "\
+            f"{[o.name for o in self.options]})"
 
     def validate(self, decl: dict, line: int=0, filename: str = None):
         """Validate the structure and values from declaration."""
@@ -261,10 +274,24 @@ class HyperDef:
         is_valid = True
         err_msg = None
         try:
-            is_valid = eval(self._validator, {
-                    "htype": self,
-                    "hval": decl
+            context = _eval_imports.copy()
+            context.update({
+                "htype": self,
+                "hval": decl,
             })
+            val_result = eval(
+                self._validator,
+                context
+            )
+            if isinstance(val_result, tuple):
+                is_valid, err_msg = val_result
+            else:
+                is_valid = val_result
+                
+            # Consider only bool values for False.
+            if not is_valid and\
+               not isinstance(is_valid, bool):
+                is_valid = True
         except Exception as e:
             err_msg = e
 
@@ -272,11 +299,36 @@ class HyperDef:
             raise err.ConfigurationError(
                 f"Invalid configuration value '{decl}' "
                 f"for type {self} "
-                f"{':' + (str(err_msg) if err_msg else '')}",
+                f"{': ' + (str(err_msg) if err_msg else '')}",
                 line=line,
                 fname=filename
             )
-            
+        
+    def convert(self, decl, line: int=0, filename: str = None):
+        """Convert option value."""
+        if decl is None:
+            raise ValueError("decl is None")
+        if not self._converter:
+            return decl
+        try:
+            context = _eval_imports.copy()
+            context.update({
+                "htype": self,
+                "hval": decl,
+            })
+            res = eval(
+                self._converter,
+                context
+            )
+            return res
+        except Exception as e:
+            raise err.ConfigurationError(
+                f"Could not convert value '{decl}' "
+                f"for type {self}: {e}",
+                line=line,
+                fname=filename
+            )
+
 
 class ConfigDefs:
     """Template definition parser and type registry."""
