@@ -1,8 +1,8 @@
 # referenced definitions
 ref1:
-  _required: False
+  required: False
   ref_opt_1: str
   ref_opt_2:
-    _type: int
-    _validator: val>3
+    type: int
+    validator: val>3
   

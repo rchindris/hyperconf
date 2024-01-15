@@ -6,6 +6,8 @@ str:
 int:
   validator: |
     int(hval)
+  converter: |
+    int(hval)
   
 pos_int:
   validator: |

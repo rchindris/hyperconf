@@ -99,7 +99,7 @@ class HyperDef:
         if tname is None:
             raise ValueError("tname is None")
         if _tdef is None or not isinstance(_tdef, dict):
-            raise ValueError("_tdef must be a dictionary")
+            raise ValueError("tdef must be a dictionary")
 
         type_name = _tdef.get(Keywords.typename, tname)
         is_required = _tdef.get(Keywords.required, False)
