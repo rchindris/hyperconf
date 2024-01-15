@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "hyperconf"
-version = "0.1.1"
+version = "0.2.0"
 description = "A Python configuration library and definition language."
 authors = ["Radu Chindris <radu.chindris@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8.1"
 PyYAML = "^6.0"
 
 [tool.poetry.dev-dependencies]
