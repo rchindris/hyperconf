@@ -36,10 +36,10 @@ def test_fail_invalid_option_type():
     test_def:
       valid_option: str
       another_valid_option:
-        _type: int
-        validator: '>3'
+        type: int
+        validator: 'int(hval) > 3'
       invalid_option:
-        - _type: int
+        - type: int
         - validator: '<4'
     """
     with pytest.raises(err.TemplateDefinitionError):

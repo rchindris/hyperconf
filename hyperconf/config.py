@@ -187,7 +187,7 @@ class HyperConfig(dict):
                                        fname=self._file)
                 })
             elif isinstance(val, list):
-                # Require that all list elements are dicts.
+                # Require that all list elements are of type dict.
                 if any(type(_) != dict for _ in val):
                     raise err.ConfigurationError(
                         "List options must contain elements of type list "
@@ -212,7 +212,7 @@ class HyperConfig(dict):
                     ident: vals
                 })
             else:
-                self.update({ident: val})
+                self.update({ident: htype.convert(val)})
 
     def __getattr__(self, attr: str):
         """Return attribute value."""

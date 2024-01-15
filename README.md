@@ -6,7 +6,10 @@
 
 ## Overview
 
-HyperConfig is a Python library for schema-based configuration. It allows you to decouple configuration definitions from values effortlessly, all without the need for any code.
+HyperConfig is a Python library for creating schema-based configuration. 
+It allows zero code configuration definition where both the structure and the 
+configuration values are validated using YAML based schema definition files.
+
 
 Advantages:
 
@@ -29,37 +32,37 @@ Define your schema in a definition file, `ships.yaml`:
 # Spaceship Configuration Schema
 
 ship_type:
-  _type: str
-  _validator: hval.isalpha()
-  _required: true
+  type: str
+  validator: hval.isalpha()
+  required: true
 
-ship_color:
-  _type: str
-  _validator: hval.lower() in ['red', 'blue', 'green', 'yellow', 'gray']
-  _required: true
+shipcolor:
+  type: str
+  validator: hval.lower() in ['red', 'blue', 'green', 'yellow', 'gray']
+  required: true
 
-engine_power:
-  _type: int
-  _validator: 100 <= hval <= 1000
-  _required: true
+enginepower:
+  type: int
+  validator: 100 <= hval <= 1000
+  required: true
 
-shield_level:
-  _type: float
-  _validator:  0.0 <= hval <= 1.0
-  _required: true
+shieldlevel:
+  type: float
+  validator:  0.0 <= hval <= 1.0
+  required: true
 
 ship:
   captain: str
   crew:
-   _type: int
-   _validator: hval > 0
-  class: ship_type
-  color: ship_color
-  shields: shield_level
-  engines: engine_power
+   type: int
+   validator: hval > 0
+  class: shiptype
+  color: shipcolor
+  shields: shieldlevel
+  engines: enginepower
 ```
 
-Then use the schema to create configuration values, `game_config.yaml`:
+Then use the schema to create configuration values, `gameconfig.yaml`:
 
 ``` yaml
 use: ships
@@ -77,19 +80,11 @@ and load it:
 
 ``` python
 >>> from hyperconfig import HyperConf
->>> config = HyperConf.load("game_config.yaml")
+>>> config = HyperConf.load("gameconfig.yaml")
 >>> print(config.ncc1701.captain)
 ```
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-HyperConfig was inspired by the need for a flexible and zero-code configuration library.
-
-## Contact
-
-For any questions or feedback, feel free to reach out to radu.chindris@gmail.com
 
