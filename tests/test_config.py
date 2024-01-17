@@ -38,9 +38,11 @@ def valid_yaml_complex_defs():
     model1=detector:
       stem: some_class_name
       heads:
-        - head1:
+        - head:
+            name: head1
             labels: labels1.json
-        - head2:
+        - head:
+            name: head2
             labels: labels2.json
     """
 
@@ -78,8 +80,10 @@ def test_parse_complex_decl(valid_yaml_complex_defs):
     config = HyperConfig.load_str(valid_yaml_complex_defs)
 
     assert "model1" in config
-    assert "head1" in config.model1.heads
-    assert "head2" in config.model1.heads
+    print([h.name for h in config.model1.heads])
+    print(any(h.name == "head1" for h in config.model1.heads))
+    assert any(h.name == "head1" for h in config.model1.heads)
+    assert any(h.name == "head2" for h in config.model1.heads)
 
 def test_ships():
     defs = """

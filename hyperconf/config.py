@@ -157,7 +157,7 @@ class HyperConfig(dict):
         else:
             self._line = line
 
-        self.name = ident
+        self._id = ident
         self._strict = strict
         self._file = fname
         self.__def__ = hdef
@@ -177,9 +177,8 @@ class HyperConfig(dict):
             if htype is None:
                 raise err.UndefinedTagError(ident, self._line)
 
-            htype.validate(val, self._line, self._file)
-
             if isinstance(val, dict):
+                htype.validate(val, self._line, self._file)
                 self.update({
                     ident: HyperConfig(ident, val, htype,
                                        strict=strict,
@@ -187,29 +186,33 @@ class HyperConfig(dict):
                                        fname=self._file)
                 })
             elif isinstance(val, list):
-                # Require that all list elements are of type dict.
-                if any(type(_) != dict for _ in val):
-                    raise err.ConfigurationError(
-                        "List options must contain elements of type list "
-                        f"(in list for option {decl_name})",
-                        line=self._line,
-                        fname=self._file)
+                # Require that all list elements are of type
+                # dict or other lists.
+                # if any(type(_) != dict and type(_) != list for _ in val):
+                #     raise err.ConfigurationError(
+                #         "List options must contain elements of type dict or list "
+                #         f"(in list for option {decl_name})",
+                #         line=self._line,
+                #         fname=self._file)
 
-                vals = HyperConfig(ident, {},  htype,
-                                   strict=strict,
-                                   line=self._line,
-                                   fname=self._file)
+                elems = []
 
                 for elem in val:
-                    elem_id, elem_decl = next(iter(elem.items()))
-                    vals.update({
-                        elem_id: HyperConfig(elem_id, elem_decl,
-                                             strict=strict,
-                                             line=self._line,
-                                             fname=self._file)
-                    })
+                    if isinstance(elem, dict):
+                        elem_id, elem_decl = next(iter(elem.items()))
+
+                        htype.validate(elem_decl, self._line, self._file)
+                        elems.append(HyperConfig(
+                            elem_id, elem_decl, htype,
+                            strict=strict,
+                            line=self._line,
+                            fname=self._file
+                        ))
+                    else:
+                        htype.validate(elem, self._line, self._file)
+                        elems.append(elem)
                 self.update({
-                    ident: vals
+                    ident: elems
                 })
             else:
                 self.update({ident: htype.convert(val)})
