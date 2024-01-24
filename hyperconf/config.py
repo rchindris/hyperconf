@@ -222,11 +222,14 @@ class HyperConfig(dict):
         if attr is None:
             raise ValueError("attr is None")
         if attr not in self:
-            raise AttributeError(
-                f"Invalid configuration key '{attr}' for "
-                f"configuraiton object {self.__def__}"
-            )
-        return self[attr]
+            if attr not in self.__def__.options:
+                raise AttributeError(
+                    f"Invalid configuration key '{attr}' for "
+                    f"configuration object {self.__def__}"
+                )
+            return None
+        else:
+            return self[attr]
 
     def __delitem__(self, v):
         """Not supported, read-only."""

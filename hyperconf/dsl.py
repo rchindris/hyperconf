@@ -193,7 +193,7 @@ class HyperDef:
             # Failed to determine type from name/tag.
             # Search the definition of the enclosing decl
             # for an option with that name.
-            opt = [o for o in hdef.options if o.name == ident]
+            opt = [o for o_name, o in hdef.options.items() if o.name == ident]
             if opt:
                 htype = opt[0].typename
 
@@ -234,13 +234,13 @@ class HyperDef:
         self.line = line
         self._validator = validator
         self._converter = converter
-        self.options = options
+        self.options = {o.name: o for o in options}
         self.allow_multiple_values = allow_multiple_values
 
     def __repr__(self):
         """Debug str representation."""
         return f"({self.name} "\
-            f"{[o.name for o in self.options]})"
+            f"{list(self.options.keys())})"
 
     def validate(self, decl: dict, line: int=0, filename: str = None):
         """Validate the structure and values from declaration."""
@@ -252,16 +252,16 @@ class HyperDef:
             decl_opts = list(decl.keys())
             
             # any required opt not specified => error
-            for opt in self.options:
-                if not opt in decl_opts:
+            for opt_name, opt in self.options.items():
+                if not opt_name in decl_opts and opt.is_required:
                     raise err.ConfigurationError(
                         f"Missing required option {opt}",
                         line=decl.line, fname=filename
                     )
-                decl_opts.remove(opt)
+                decl_opts.remove(opt_name)
 
             # check if remaining are valid opt names
-            if any([opt not in self.options
+            if any([opt not in self.options.keys()
                     for opt in decl_opts]):
                 opt_names = [o for o in decl_opts
                              if not o in self.options]
