@@ -174,6 +174,7 @@ class HyperConfig(dict):
         # Parse objects
         for decl_name, val in objs:
             ident, htype = dsl.HyperDef.infer_type(decl_name, val, hdef)
+
             if htype is None:
                 raise err.UndefinedTagError(ident, self._line)
 
@@ -207,6 +208,7 @@ class HyperConfig(dict):
                     ident: elems
                 })
             else:
+                htype.validate(val, self._line, self._file)
                 self.update({ident: htype.convert(val)})
 
     def __getattr__(self, attr: str):
