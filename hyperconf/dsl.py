@@ -139,7 +139,7 @@ class HyperDef:
                 opts.append(HyperDef(
                     name=aname,
                     typename=aval.get(Keywords.typename, str),
-                    required=aval.get(Keywords.required, True),
+                    required=aval.get(Keywords.required, False),
                     validator=aval.get(Keywords.validator, None),
                     converter=aval.get(Keywords.converter, None),
                     line=opt_line,
@@ -229,7 +229,7 @@ class HyperDef:
         """
         self.name = name
         self.typename = typename
-        self.requiredred = required
+        self.required = required
         self.def_file = fpath
         self.line = line
         self._validator = validator
@@ -242,23 +242,24 @@ class HyperDef:
         return f"({self.name} "\
             f"{list(self.options.keys())})"
 
-    def validate(self, decl: dict, line: int=0, filename: str = None):
+    def validate(self, decl: dict, line: int=0, filename: str=None):
         """Validate the structure and values from declaration."""
-        if not self._validator:
-            return True
-
         # validate structure
         if type(decl) is dict:
             decl_opts = list(decl.keys())
+            if Keywords.line in decl_opts:
+                decl_opts.remove(Keywords.line)
             
             # any required opt not specified => error
             for opt_name, opt in self.options.items():
-                if not opt_name in decl_opts and opt.is_required:
+                if opt_name in decl_opts:
+                    decl_opts.remove(opt_name)
+                elif opt.required:
+                    print(opt, opt.required)
                     raise err.ConfigurationError(
                         f"Missing required option {opt}",
-                        line=decl.line, fname=filename
-                    )
-                decl_opts.remove(opt_name)
+                        line=line, fname=filename)
+
 
             # check if remaining are valid opt names
             if any([opt not in self.options.keys()
@@ -268,8 +269,11 @@ class HyperDef:
                 raise err.ConfigurationError(
                     f"Unkown options {opt_names} for definition {self}.",
                     line=line,
-                    filename=filename
+                    fname=filename
                 )
+
+        if not self._validator:
+            return True
 
         is_valid = True
         err_msg = None
@@ -279,10 +283,12 @@ class HyperDef:
                 "htype": self,
                 "hval": decl,
             })
+            print("VALIDATE: ", decl)
             val_result = eval(
                 self._validator,
                 context
             )
+            print("RESULT:", val_result)
             if isinstance(val_result, tuple):
                 is_valid, err_msg = val_result
             else:
@@ -334,6 +340,8 @@ class ConfigDefs:
     """Template definition parser and type registry."""
 
     _typedefs = {}
+    _loaded_files = []
+    _search_packages = [__name__.split(".")[0]]
 
     @staticmethod
     def add(hdefs):
@@ -377,6 +385,18 @@ class ConfigDefs:
         """Remove all known type bindings."""
         ConfigDefs._typedefs.clear()
         ConfigDefs._loaded_files.clear()
+
+    @staticmethod
+    def add_package(package_name: str):
+        """Add a package to the def search path.
+
+        Args:
+        package_name (str): a Python package name.
+        """
+        if package_name is None:
+            raise ValueError("package_name is None")
+        if not package_name in ConfigDefs._search_packages:
+            ConfigDefs._search_packages.append(package_name)
 
     @staticmethod
     def parse_dict(defs: t.Dict, fname: str = None):
@@ -436,9 +456,10 @@ class ConfigDefs:
         """Load built-in types."""
         ConfigDefs.parse_yaml("builtins")
 
-    _loaded_files = []
+
     @staticmethod
-    def parse_yaml(template_path: str, line: int = 0, ref_file: str = None):
+    def parse_yaml(template_path: str,
+                   line: int = 0, ref_file: str = None):
         """Load definitions from path.
 
         :param template_path:
@@ -450,19 +471,28 @@ class ConfigDefs:
         :param ref_file:
         the file that contains the use directive.
         """
+        if template_path is None:
+            raise ValueError("template_path is None")
         if not template_path.endswith(".yaml"):
             template_path = template_path + ".yaml"
 
-        template_path = Path(template_path) if \
-            isinstance(template_path, str) else template_path
+        template_path = Path(template_path)
 
         if not template_path.exists():
-            # Search for a packaged resource
-            # having the same name (predefined template).
-            pkg_files = resources.files("hyperconf")
-            template_path = pkg_files / template_path.name
+            # File not found. Search for a package resource
+            # in one of the packages listed in _search_path.
+            found_in_package = False
+            
+            for package_name in ConfigDefs._search_packages:
+                print(package_name, template_path)
+                pkg_files = resources.files(package_name)
+                
+                package_path = pkg_files / template_path.name
+                if package_path.exists():
+                    found_in_package = True
+                    template_path = package_path
 
-            if not template_path.exists():
+            if not found_in_package:
                 raise err.TemplateDefinitionError(
                     name=Keywords.use,
                     message=f"Failed to load template '{template_path}'. "
@@ -470,8 +500,8 @@ class ConfigDefs:
                     line=line,
                     config_path=ref_file)
 
-        if template_path not in ConfigDefs._loaded_files:
-            ConfigDefs._loaded_files.append(template_path)
+        if not template_path.as_posix() in ConfigDefs._loaded_files:
+            ConfigDefs._loaded_files.append(template_path.as_posix())
             with open(template_path) as tfile:
                 try:
                     return ConfigDefs.parse_dict(

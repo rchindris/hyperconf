@@ -167,7 +167,7 @@ class HyperConfig(dict):
         objs = []
         for decl_name, val in config_values.items():
             if decl_name == dsl.Keywords.use:
-                dsl.ConfigDefs.parse_yaml(val, 0, fname)
+                dsl.ConfigDefs.parse_yaml(val, ref_file=fname)
             else:
                 objs.append((decl_name, val))
 
@@ -186,15 +186,6 @@ class HyperConfig(dict):
                                        fname=self._file)
                 })
             elif isinstance(val, list):
-                # Require that all list elements are of type
-                # dict or other lists.
-                # if any(type(_) != dict and type(_) != list for _ in val):
-                #     raise err.ConfigurationError(
-                #         "List options must contain elements of type dict or list "
-                #         f"(in list for option {decl_name})",
-                #         line=self._line,
-                #         fname=self._file)
-
                 elems = []
 
                 for elem in val:
@@ -202,6 +193,7 @@ class HyperConfig(dict):
                         elem_id, elem_decl = next(iter(elem.items()))
 
                         htype.validate(elem_decl, self._line, self._file)
+
                         elems.append(HyperConfig(
                             elem_id, elem_decl, htype,
                             strict=strict,
