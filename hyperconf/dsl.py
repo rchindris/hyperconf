@@ -41,10 +41,11 @@ class Keywords:
     converter = "converter"
     typename = "type"
     required = "required"
+    default = "default"
     allow_multiple = "allow_many"
     line = "__line__"
     use = "use"
-    HDef = [validator, converter, typename, required, allow_multiple]
+    HDef = [validator, converter, typename, required, allow_multiple, default]
 
 
 class HyperDef:
@@ -142,6 +143,7 @@ class HyperDef:
                     required=aval.get(Keywords.required, False),
                     validator=aval.get(Keywords.validator, None),
                     converter=aval.get(Keywords.converter, None),
+                    default=aval.get(Keywords.default, None),
                     line=opt_line,
                     fpath=fname))
             else:
@@ -210,6 +212,7 @@ class HyperDef:
                  required: bool = False,
                  validator: str = None,
                  converter: str = None,
+                 default: str = None,
                  allow_multiple_values: bool = False,
                  options: t.List = []):
         """ Initialize a configuration object definition.
@@ -255,7 +258,6 @@ class HyperDef:
                 if opt_name in decl_opts:
                     decl_opts.remove(opt_name)
                 elif opt.required:
-                    print(opt, opt.required)
                     raise err.ConfigurationError(
                         f"Missing required option {opt}",
                         line=line, fname=filename)
@@ -272,28 +274,24 @@ class HyperDef:
                     fname=filename
                 )
 
-        if not self._validator:
-            return True
-
         is_valid = True
         err_msg = None
+
         try:
             context = _eval_imports.copy()
             context.update({
                 "htype": self,
                 "hval": decl,
             })
-            print("VALIDATE: ", decl)
             val_result = eval(
                 self._validator,
                 context
             )
-            print("RESULT:", val_result)
             if isinstance(val_result, tuple):
                 is_valid, err_msg = val_result
             else:
                 is_valid = val_result
-                
+
             # Consider only bool values for False.
             if not is_valid and\
                not isinstance(is_valid, bool):
@@ -484,7 +482,6 @@ class ConfigDefs:
             found_in_package = False
             
             for package_name in ConfigDefs._search_packages:
-                print(package_name, template_path)
                 pkg_files = resources.files(package_name)
                 
                 package_path = pkg_files / template_path.name

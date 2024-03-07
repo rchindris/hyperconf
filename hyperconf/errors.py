@@ -1,5 +1,5 @@
 """Define custom hyperconf exceptions."""
-
+from typing import Type
 
 class HyperConfError(Exception):
     """Base exception class for HyperConf package."""
@@ -125,3 +125,10 @@ class ConfigurationError(HyperConfError):
         message (str): the error message.
         """
         super().__init__(message, line, fname)
+
+
+class DuplicateMappingError(HyperConfError):
+    """Signals that a tag is already mapped to a class."""
+
+    def __init__(self, tag: str, cls: Type):
+        super().__init__(f"the tag {tag} is already mapped to {cls}")

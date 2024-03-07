@@ -27,13 +27,11 @@ percent:
   converter: |
     float(hval)
 
-path:
-  _type: str
-
 dir:
-  validator: |
-    pathlib.Path(hval).is_dir(), "Not a directory"
+  type: str
   converter: |
     pathlib.Path(hval)
 
-  
+snake_case_id:
+  validator: |
+    re.match(r'^[A-Z_]+$', hval) != None, "Invalid label name format. Use snake case (e.g. LBL_NAME)"
