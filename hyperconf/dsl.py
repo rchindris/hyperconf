@@ -73,7 +73,7 @@ class HyperDef:
         The method then treats the rest of the dictionary keys as option specifiers.
         Each option must be of a previously defined type.
         Nesting definitions is not allowed.
-        
+
         Example(s):
         >>> hyper_def.parse('nat', {
         ...     'validator': "hval >= 0"
@@ -106,6 +106,7 @@ class HyperDef:
         is_required = _tdef.get(Keywords.required, False)
         validator = _tdef.get(Keywords.validator, None)
         converter = _tdef.get(Keywords.converter, None)
+        default = _tdef.get(Keywords.default, None)
 
         for k in Keywords.HDef:
             if k in _tdef:
@@ -154,6 +155,7 @@ class HyperDef:
                         required=is_required,
                         validator=validator,
                         converter=converter,
+                        default=default,
                         options=opts)
 
     @staticmethod
@@ -161,9 +163,9 @@ class HyperDef:
         """Determine the definition for the given tag.
 
         A declaration has the syntax
-        
+
          decl_name[=def_name]: ...
-           
+
         If def_name is specified then the decl_name can be any valid
         identifier, otherwise decl_name designates the definition to use,
         e.g.:
@@ -202,7 +204,7 @@ class HyperDef:
         if not htype:
             # Default to the actual datatype.
             htype = decl.__class__.__name__
-            
+
         return ident, ConfigDefs.get(htype) if htype else None
 
     def __init__(self, name,
@@ -235,8 +237,9 @@ class HyperDef:
         self.required = required
         self.def_file = fpath
         self.line = line
-        self._validator = validator
-        self._converter = converter
+        self.validator = validator
+        self.converter = converter
+        self.default = default
         self.options = {o.name: o for o in options}
         self.allow_multiple_values = allow_multiple_values
 
@@ -245,6 +248,31 @@ class HyperDef:
         return f"({self.name} "\
             f"{list(self.options.keys())})"
 
+    def set_defaults(self, decl: dict, in_place: bool = True):
+        """Set default values for unspecified options.
+
+        This function only adds options and their default values
+        if the option is not 'required'.
+        Args:
+        decl (dict): the configuation object declaration.
+        in_place (bool): if True add the missing options to the
+         decl dict, if False return a new dictionary.
+        """
+        if decl is None:
+            raise ValueError("decl is None")
+        if not isinstance(decl, dict):
+            raise ValueError("expecting a dict instance for decl")
+
+        opts = decl if in_place else decl.copy()
+        for opt_name, opt in self.options.items():
+            if opt.required:
+                continue
+            if opt_name not in opts:
+                opts[opt_name] = opt.default
+
+        return opts
+
+
     def validate(self, decl: dict, line: int=0, filename: str=None):
         """Validate the structure and values from declaration."""
         # validate structure
@@ -252,7 +280,7 @@ class HyperDef:
             decl_opts = list(decl.keys())
             if Keywords.line in decl_opts:
                 decl_opts.remove(Keywords.line)
-            
+
             # any required opt not specified => error
             for opt_name, opt in self.options.items():
                 if opt_name in decl_opts:
@@ -284,7 +312,7 @@ class HyperDef:
                 "hval": decl,
             })
             val_result = eval(
-                self._validator,
+                self.validator,
                 context
             )
             if isinstance(val_result, tuple):
@@ -307,12 +335,12 @@ class HyperDef:
                 line=line,
                 fname=filename
             )
-        
+
     def convert(self, decl, line: int=0, filename: str = None):
         """Convert option value."""
         if decl is None:
             raise ValueError("decl is None")
-        if not self._converter:
+        if not self.converter:
             return decl
         try:
             context = _eval_imports.copy()
@@ -321,7 +349,7 @@ class HyperDef:
                 "hval": decl,
             })
             res = eval(
-                self._converter,
+                self.converter,
                 context
             )
             return res
@@ -353,7 +381,7 @@ class ConfigDefs:
         if not isinstance(hdefs, list):
             hdefs = [hdefs]
 
-        for hdef in hdefs:            
+        for hdef in hdefs:
             if hdef.name in ConfigDefs._typedefs:
                 raise err.DuplicateDefError(
                     ConfigDefs._typedefs[hdef.name], hdef
@@ -480,10 +508,10 @@ class ConfigDefs:
             # File not found. Search for a package resource
             # in one of the packages listed in _search_path.
             found_in_package = False
-            
+
             for package_name in ConfigDefs._search_packages:
                 pkg_files = resources.files(package_name)
-                
+
                 package_path = pkg_files / template_path.name
                 if package_path.exists():
                     found_in_package = True

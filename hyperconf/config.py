@@ -178,7 +178,11 @@ class HyperConfig(dict):
             if htype is None:
                 raise err.UndefinedTagError(ident, self._line)
 
+            # handle dict, list or atomic options
             if isinstance(val, dict):
+                # set default option values.
+                htype.set_defaults(val)
+
                 htype.validate(val, self._line, self._file)
                 self.update({
                     ident: HyperConfig(ident, val, htype,
