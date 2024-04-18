@@ -1,22 +1,9 @@
-Configuration Schema Definition
+Defining Configuration Schemas
 ===============================
 
 
 By defining a configuration object schema, you gain control over the structure of those configuration objects. This involves specifying the options and their types, along with setting value validation rules and string-to-value conversion.
 
-The `use` directive
--------------------
-
-Schemas need to be defined separately of configuration files and be included in the configuration
-file using an `use` directive. This encourages the reuse of configuration definition files.
-`use` directives can appear anywhere at the top level in the configuration or schema definition files.
-
-The correct form of an `use` directive is::
-
-  use: file_path
-
-where `file_path` is the relative or absolute path of a schema YAML file. The extension can be
-ommited in which case the '.yaml' suffix is appended automatically.
 
 Defining an Object
 ------------------
@@ -62,6 +49,11 @@ In this case the `invalid_option` option attempts to nest another type definitio
           validator: 'int(hval) > 3'
         now_valid_option: was_nested
 
+Mapping Classes to Objects
+--------------------------
+
+There are situations when you want to assign classes to particular object types. Like, for example, when configuring an application that
+makes use of various 'services' that are to be dynamically created (dependency injection). HyperConf 
 
 Validating and Converting Values
 --------------------------------

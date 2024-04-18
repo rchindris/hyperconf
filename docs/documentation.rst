@@ -7,5 +7,6 @@ Documentation
 
    quickstart
    define_schema
+   define_config
    builtins
    
